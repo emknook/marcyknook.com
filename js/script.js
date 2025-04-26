@@ -248,7 +248,9 @@ function closeApp(targetId) {
             item.classList.remove('active');
         }
     });
-    let index = settings.openApps.findIndex(e => e.name === targetId);
-    settings.openApps.splice(index, 1);
+    if (settings.openApps) {
+        let index = settings.openApps.findIndex(e => e.name === targetId);
+        settings.openApps.splice(index, 1);
+    }
     currentlyClosing = true;
 }
