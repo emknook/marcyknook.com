@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styling/custom.css">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.png">
 </head>
 
 <body onload="loadSettings()">
-
   <div class="nav-pane">
     <div class="nav-item m" data-target="app0">
       <span class="label">Home</span>
@@ -36,15 +36,20 @@
     </div>
   </div>
   <div class="app-content resizable m" id="app0">
-    <div class="draggable m"></div>
+    <div class="topBar m">
+       <div class="close-button">X</div>
+     <div class="resize-button" id="resizeBtn">↙</div>
+    </div>
     <div class="scrollwrapper" id="content">
       <h1>Hi there!</h1>
       <p>Currently under construction ;)</p>
     </div>
-    <div class="resize-button" id="resizeBtn">↙</div>
   </div>
   <div class="app-content resizable y" id="app1">
-    <div class="draggable y"></div>
+    <div class="topBar y">
+       <div class="close-button">X</div>
+     <div class="resize-button" id="resizeBtn">↙</div>
+    </div>
     <div class="scrollwrapper" id="content">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec non pharetra ipsum. Curabitur eget hendrerit
@@ -221,29 +226,34 @@
         senectus et netus et malesuada fames ac turpis egestas. Maecenas sodales lacus sed diam rutrum tempus.
         Pellentesque laoreet metus consequat mollis tincidunt. Proin tempor tellus id odio congue aliquet.
     </div>
-    <div class="resize-button" id="resizeBtn">↙</div>
   </div>
   <div class="app-content resizable r" id="app2">
-    <div class="draggable r"></div>
+    <div class="topBar r">
+       <div class="close-button">X</div>
+     <div class="resize-button" id="resizeBtn">↙</div>
+    </div>
     <div class="scrollwrapper" id="content">
     </div>
-    <div class="resize-button" id="resizeBtn">↙</div>
   </div>
   <div class="app-content resizable g" id="app3">
-    <div class="draggable g"></div>
+    <div class="topBar g">
+       <div class="close-button">X</div>
+     <div class="resize-button" id="resizeBtn">↙</div>
+    </div>
     <div class="scrollwrapper" id="content">
     </div>
-    <div class="resize-button" id="resizeBtn">↙</div>
   </div>
   <div class="app-content resizable b" id="settings">
-    <div class="draggable b"></div>
+    <div class="topBar b">
+       <div class="close-button">X</div>
+     <div class="resize-button" id="resizeBtn">↙</div>
+    </div>
     <div class="scrollwrapper" id="content">
       <!-- TODO: add reset button -->
       <!-- TODO: add settings as options and load them as settings instead of text -->
       <!-- settings: Contrast | Theme | Konami unlock | Loaded -->
       <div class="button" onclick="resetSettings()">Reset</div>
     </div>
-    <div class="resize-button" id="resizeBtn">↙</div>
   </div>
 
 </body>

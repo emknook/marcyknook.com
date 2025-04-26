@@ -3,13 +3,18 @@ let settings = {};
 let highestZ = 0;
 const navItems = document.querySelectorAll(".nav-item");
 const appElements = document.querySelectorAll(".app-content");
-const handleEls = document.getElementsByClassName("draggable");
-let isDragging = false; let currentlyResizing;
+const topBar = document.querySelectorAll(".topBar");
+let isDragging = false;
+let currentlyResizing;
 let startX, startY, startWidth, startHeight, startPosLeft;
 let offsetX, offsetY;
 let currentlyDragging;
+let currentlyClosing = false;
 
 function resetSettings() {
+    appElements.forEach(app => {
+        closeApp(app.id)
+    });
     settings = {
         theme: 'dark',
         fontSize: 'large',
@@ -17,14 +22,19 @@ function resetSettings() {
         appSettings: []
     };
     localStorage.setItem('userSettings', JSON.stringify(settings));
+    openApp('app0');
 }
 
 function setHighest(targetApp) {
     highestZ++;
     targetApp.style.zIndex = highestZ;
-    navItems.forEach(navItem => {
-        navItem.dataset.target === targetApp.id ? navItem.classList.add("active") : navItem.classList.remove("active");
-    });
+    if (!currentlyClosing) {
+        navItems.forEach(navItem => {
+            navItem.dataset.target === targetApp.id ? navItem.classList.add("active") : navItem.classList.remove("active");
+        });
+    } else {
+        currentlyClosing = false;
+    }
 }
 
 //startResize => mousedown / touchstart
@@ -35,6 +45,7 @@ function startResize(app, x, y) {
     startWidth = parseInt(document.defaultView.getComputedStyle(currentlyResizing).width, 10);
     startHeight = parseInt(document.defaultView.getComputedStyle(currentlyResizing).height, 10);
     startPosLeft = parseInt(document.defaultView.getComputedStyle(currentlyResizing).left, 10);
+    startPosTop = parseInt(document.defaultView.getComputedStyle(currentlyResizing).top, 10);
     document.addEventListener('mousemove', (e) => {
         onResize(e.clientX, e.clientY);
     });
@@ -52,11 +63,13 @@ function onResize(x, y) {
         offsetX = x - startX;
         offsetY = y - startY;
         let newWidth = startWidth - offsetX;
-        let newHeight = startHeight + offsetY;
+        let newHeight = startHeight - offsetY;
+        let newTop = startPosTop + offsetY;
         let newLeft = startPosLeft + offsetX;
         currentlyResizing.style.left = newLeft + 'px';
         currentlyResizing.style.width = newWidth + 'px';
         currentlyResizing.style.height = newHeight + 'px';
+        currentlyResizing.style.top = newTop + 'px';
     }
 }
 
@@ -73,13 +86,13 @@ function stopResize() {
     currentlyResizing = null;
 }
 
-function startDrag(handleBar, x, y) {
-    let windowEl = handleBar.parentElement;
+function startDrag(topBar, x, y) {
+    let windowEl = topBar.parentElement;
     isDragging = true;
-    currentlyDragging = handleBar.parentElement;
+    currentlyDragging = topBar.parentElement;
     offsetX = x - windowEl.offsetLeft;
     offsetY = y - windowEl.offsetTop;
-    handleBar.style.cursor = "grabbing";
+    topBar.style.cursor = "grabbing";
 }
 
 function onMove(x, y) {
@@ -93,13 +106,13 @@ function onMove(x, y) {
     }
 }
 
-function stopDrag(handleBar) {
+function stopDrag(topBar) {
     let app = currentlyDragging;
     if (app) {
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
         currentlyDragging = null;
         isDragging = false;
-        handleBar.style.cursor = "grab";
+        topBar.style.cursor = "grab";
     }
 }
 
@@ -125,19 +138,26 @@ function loadSettings() {
         });
     });
 
-    const resizeButtons = document.getElementsByClassName('resize-button');
-    for (let i = 0; i < resizeButtons.length; i++) {
-        let button = resizeButtons.item(i);
+    const resizeButtons = document.querySelectorAll('.resize-button');
+    resizeButtons.forEach(button => {
         button.addEventListener('mousedown', function (e) {
             e.preventDefault();
-            startResize(e.currentTarget.parentElement, e.clientX, e.clientY);
+            startResize(e.currentTarget.parentElement.parentElement, e.clientX, e.clientY);
         });
         button.addEventListener('touchstart', function (e) {
             e.preventDefault();
             const touch = e.touches[0];
-            startResize(e.currentTarget.parentElement, touch.clientX, touch.clientY);
+            startResize(e.currentTarget.parentElement.parentElement, touch.clientX, touch.clientY);
         });
-    }
+    });
+
+    const closeButtons = document.querySelectorAll('.close-button');
+    closeButtons.forEach(button => {
+        button.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            closeApp(e.currentTarget.parentElement.parentElement.id);
+        })
+    });
 
     navItems.forEach(item => {
         item.addEventListener("click", () => {
@@ -146,14 +166,14 @@ function loadSettings() {
         });
     });
 
-    Array.from(handleEls).forEach(handleBar => {
-        handleBar.addEventListener("mousedown", (e) => {
-            startDrag(handleBar, e.clientX, e.clientY);
+    topBar.forEach(topBar => {
+        topBar.addEventListener("mousedown", (e) => {
+            startDrag(topBar, e.clientX, e.clientY);
         });
 
-        handleBar.addEventListener("touchstart", (e) => {
+        topBar.addEventListener("touchstart", (e) => {
             const touch = e.touches[0];
-            startDrag(handleBar, touch.clientX, touch.clientY);
+            startDrag(topBar, touch.clientX, touch.clientY);
         });
 
         document.addEventListener("mousemove", (e) => {
@@ -166,7 +186,7 @@ function loadSettings() {
         }, { passive: false });
 
         document.addEventListener("mouseup", () => {
-            stopDrag(handleBar);
+            stopDrag(topBar);
         });
 
         document.addEventListener("touchend", stopDrag);
@@ -187,7 +207,7 @@ function updateApp(name, x, y, height, width) {
 }
 
 function openApp(targetId) {
-    //TODO: rewrite to a toggle for close
+    currentlyClosing = false;
     let index = settings.appSettings.findIndex(app => app.name === targetId);
     let targetApp;
     let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -215,4 +235,20 @@ function openApp(targetId) {
     if (!settings.openApps.includes(targetId)) {
         settings.openApps.push(targetId);
     }
+}
+
+function closeApp(targetId) {
+    appElements.forEach(app => {
+        if (app.id === targetId) {
+            app.classList.remove('show');
+        }
+    });
+    navItems.forEach(item => {
+        if (item.dataset.target === targetId) {
+            item.classList.remove('active');
+        }
+    });
+    let index = settings.openApps.findIndex(e => e.name === targetId);
+    settings.openApps.splice(index, 1);
+    currentlyClosing = true;
 }

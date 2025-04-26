@@ -97,7 +97,7 @@ body {
   opacity: 1;
 }
 
-.draggable {
+.topBar {
   cursor: grab;
   height: 24px;
   user-select: none;
@@ -154,25 +154,39 @@ body {
   touch-action: none;
   width: 24px;
   text-align: center;
+  display: inline-block;
 }
 
-.draggable.b {
+.close-button {
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+  color: white;
+  font-size: 12px;
+  user-select: none;
+  touch-action: none;
+  width: 24px;
+  text-align: center;
+  display: inline-block;
+}
+
+.topBar.b {
   background-color: var(--blue);
 }
 
-.draggable.g {
+.topBar.g {
   background-color: var(--green);
 }
 
-.draggable.y {
+.topBar.y {
   background-color: var(--yellow);
 }
 
-.draggable.m {
+.topBar.m {
   background-color: var(--magenta);
 }
 
-.draggable.r {
+.topBar.r {
   background-color: var(--red);
 }
 
