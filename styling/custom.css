@@ -170,27 +170,31 @@ body {
   display: inline-block;
 }
 
-.topBar.b {
+.bg-b {
   background-color: var(--blue);
 }
 
-.topBar.g {
+.bg-g {
   background-color: var(--green);
 }
 
-.topBar.y {
+.bg-y {
   background-color: var(--yellow);
 }
 
-.topBar.m {
+.bg-m {
   background-color: var(--magenta);
 }
 
-.topBar.r {
+.bg-r {
   background-color: var(--red);
 }
 
-.nav-item.active.r {
+.r {
+  border-color: var(--red);
+}
+
+.nav-item.active {
   background-color: var(--red);
   border-color: var(--active-border);
 }
@@ -213,10 +217,6 @@ body {
 .nav-item.active.m {
   background-color: var(--magenta);
   border-color: var(--active-border);
-}
-
-.r {
-  border-color: var(--red);
 }
 
 .g {
