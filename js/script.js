@@ -87,15 +87,16 @@ function stopResize() {
 }
 
 function startDrag(topBar, x, y) {
+    // save startLocation for dragging
     let windowEl = topBar.parentElement;
-    isDragging = true;
+    isDragging = true; //boolean (can also be currentlyDragging != null?)
     currentlyDragging = topBar.parentElement;
     offsetX = x - windowEl.offsetLeft;
     offsetY = y - windowEl.offsetTop;
     topBar.style.cursor = "grabbing";
 }
 
-function onMove(x, y) {
+function onDrag(x, y) {
     if (isDragging) {
         let newLeft = (x - offsetX) + "px";
         let newTop = (y - offsetY) + "px";
@@ -137,7 +138,6 @@ function loadSettings() {
             setHighest(app);
         });
     });
-
     const resizeButtons = document.querySelectorAll('.resize-button');
     resizeButtons.forEach(button => {
         button.addEventListener('mousedown', function (e) {
@@ -177,12 +177,12 @@ function loadSettings() {
         });
 
         document.addEventListener("mousemove", (e) => {
-            onMove(e.clientX, e.clientY);
+            onDrag(e.clientX, e.clientY);
         });
 
         document.addEventListener("touchmove", (e) => {
             const touch = e.touches[0];
-            onMove(touch.clientX, touch.clientY);
+            onDrag(touch.clientX, touch.clientY);
         }, { passive: false });
 
         document.addEventListener("mouseup", () => {
@@ -209,14 +209,12 @@ function updateApp(name, x, y, height, width) {
 function openApp(targetId) {
     currentlyClosing = false;
     let index = settings.appSettings.findIndex(app => app.name === targetId);
-    let targetApp;
     let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
     let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
     if (index === -1) { //no settings saved for app
         appElements.forEach(app => {
             if (app.id === targetId) {
-                targetApp = app;
-                settings.appSettings.push({ name: targetId, x: w * 0.25 + 'px', y: h * 0.25 + 'px', height: h * 0.5 + 'px', width: w * 0.5 + 'px' });
+                settings.appSettings.push({ name: targetId, x: w * 0.2 + 'px', y: h * 0.15 + 'px', height: h * 0.7 + 'px', width: w * 0.7 + 'px' });
             }
         });
     }
@@ -229,6 +227,7 @@ function openApp(targetId) {
             app.style.left = settings.appSettings[index].x;
             setHighest(app);
             app.classList.add("show");
+            updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
         }
     });
     //if in settings.openApps, don't do anything, else, add
