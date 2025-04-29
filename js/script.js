@@ -218,6 +218,10 @@ function openApp(targetId) {
             }
         });
     }
+    //if in settings.openApps, don't do anything, else, add
+    if (!settings.openApps.includes(targetId)) {
+        settings.openApps.push(targetId);
+    }
     index = settings.appSettings.findIndex(app => app.name === targetId);
     appElements.forEach(app => {
         if (app.id === targetId) {
@@ -230,10 +234,6 @@ function openApp(targetId) {
             updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
         }
     });
-    //if in settings.openApps, don't do anything, else, add
-    if (!settings.openApps.includes(targetId)) {
-        settings.openApps.push(targetId);
-    }
 }
 
 function closeApp(targetId) {
