@@ -30,6 +30,10 @@ body {
   z-index: 1000;
 }
 
+.snake canvas {
+  border: 1px solid green;
+}
+
 .nav-item {
   width: 50px;
   height: 50px;
