@@ -21,7 +21,7 @@ function resetSettings() {
         openApps: ['app0'],
         appSettings: []
     };
-    localStorage.setItem('userSettings', JSON.stringify(settings));
+    saveSettings()
     openApp('app0');
 }
 
@@ -193,6 +193,12 @@ function loadSettings() {
     });
 }
 
+function saveSettings() {
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+
+
+}
+
 function updateApp(name, x, y, height, width) {
     const index = settings.appSettings.findIndex(app => app.name === name);
     let newApp = { name, x, y, height, width };
@@ -203,7 +209,7 @@ function updateApp(name, x, y, height, width) {
         // App doesn't exist, add it
         settings.appSettings.push(newApp);
     }
-    localStorage.setItem('userSettings', JSON.stringify(settings));
+    saveSettings()
 }
 
 function openApp(targetId) {

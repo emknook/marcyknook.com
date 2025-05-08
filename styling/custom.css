@@ -53,7 +53,7 @@ body {
 }
 
 .nav-item:hover {
-  width: 180px;
+  width: 210px;
   /* fallback for firefox & other not-calc-size supporting browsers */
   transition: width 0.3s ease;
   width: calc-size(auto, size);
