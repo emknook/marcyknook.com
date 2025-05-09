@@ -113,6 +113,7 @@ body {
   height: 24px;
   user-select: none;
   touch-action: none;
+  text-align: right;
 }
 
 .app-content {
@@ -158,14 +159,15 @@ body {
 .resize-button {
   position: relative;
   height: 24px;
-  cursor: nesw-resize;
+  cursor: nwse-resize;
   color: white;
-  font-size: 12px;
+  font-size: 18px;
   user-select: none;
   touch-action: none;
   width: 24px;
   text-align: center;
-  display: inline-block;
+  /* display: inline-block; */
+  float: left;
 }
 
 .title-bar {
