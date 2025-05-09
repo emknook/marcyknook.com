@@ -1,19 +1,11 @@
 //px => make into variable defined by size of window
-var tileHeight = 20;
-var tileWidth = 20;
-var fieldSize = 30; //x & y (0 - 19)
-
-var fieldWidth = tileWidth * fieldSize;
-var fieldHeight = tileHeight * fieldSize;
-var snakeContainer = document.getElementById("snake");
+var tileSize = 20;
+var fieldSize = 15; //x & y (0 - 19)
+var snakeContainer = document.getElementById("snake").querySelector('[id="content"]');
 var field = document.createElement("canvas");
-
-field.style.width = fieldWidth + 'px';
-field.style.height = fieldHeight + 'px';
-field.width = fieldWidth;
-field.height = fieldHeight;
+snakeContainer.append(field);
+var canvasSize = tileSize * fieldSize;
 const cnvsCtx = field.getContext("2d");
-snakeContainer.querySelector('[id="content"]').append(field);
 // var scoreDiv = document.getElementById('score');
 //setup snake, array of "blocks"/"tiles" with x and y (the more blocks, the longer the snake)
 var snake = [{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) },
@@ -21,12 +13,10 @@ var snake = [{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) },
 { x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) + 2 }];
 var dirX = 0; // -1 = left 1 = right
 var dirY = 1; // -1 = up 1 = down
-
+var started = false;
+var playing = false;
 var score = 0;
-
-//setup first level contents
 var berries = [];
-addBerries(3, 4);//add at least 3 for first level
 function addBerries(min, max) {
     //add at least min amount of berries, plus max
     for (var i = 0; (i < Math.floor(Math.random() * max) + min) && i < max; i++) {
@@ -38,6 +28,15 @@ function addBerries(min, max) {
     }
 }
 
+function setupSnake() {
+    determineSize();
+    addBerries(3, 4);//add at least 3 for first level
+    document.addEventListener("keydown", handleKeyPress); // "live"
+    snakeInterval = setInterval(gameLoop, 200); // live
+    started = true;
+    playing = true;
+}
+
 //do loop
 function gameLoop() {
     //function
@@ -45,22 +44,20 @@ function gameLoop() {
     //determine size of field
     determineSize();
     //draw
-    cnvsCtx.clearRect(0, 0, fieldWidth, fieldHeight);
+    cnvsCtx.clearRect(0, 0, fieldSize, fieldSize);
     drawBerries();
     drawSnake();
 }
 
 function determineSize() {
-    fieldHeight = snakeContainer.style.height;
-    fieldWidth = snakeContainer.style.width;
-    var width = fieldWidth.split("px")[0];
-    var height = fieldHeight.split("px")[0];
-    tileWidth = width / fieldSize;
-    tileHeight = height / fieldSize;
-    field.style.width = width + 'px';
-    field.style.height = height - 24 + 'px';
-    field.width = width;
-    field.height = height;
+    var width = snakeContainer.getBoundingClientRect().width;
+    var height = snakeContainer.getBoundingClientRect().height;
+    var size = height > width ? width : height;
+    tileSize = size / fieldSize;
+    field.style.width = size + 'px';
+    field.style.height = size + 'px';
+    field.width = size;
+    field.height = size;
 
 }
 
@@ -106,14 +103,14 @@ function handleCollision() {
 
 function drawSnake() {
     cnvsCtx.fillStyle = "white";
-    snake.forEach(e => cnvsCtx.fillRect(e.x * tileWidth, e.y * tileHeight, tileWidth, tileHeight));
+    snake.forEach(e => cnvsCtx.fillRect(e.x * tileSize, e.y * tileSize, tileSize, tileSize));
     cnvsCtx.strokeStyle = "black";
-    snake.forEach(e => cnvsCtx.strokeRect(e.x * tileWidth + 1, e.y * tileHeight + 1, tileWidth - 2, tileHeight - 2));
+    snake.forEach(e => cnvsCtx.strokeRect(e.x * tileSize + 1, e.y * tileSize + 1, tileSize - 2, tileSize - 2));
 }
 
 function drawBerries() {
     cnvsCtx.fillStyle = "red";
-    berries.forEach(e => cnvsCtx.fillRect(e.x * tileWidth, e.y * tileHeight, tileWidth, tileHeight));
+    berries.forEach(e => cnvsCtx.fillRect(e.x * tileSize, e.y * tileSize, tileSize, tileSize));
 }
 
 function gameOver() {
@@ -121,6 +118,8 @@ function gameOver() {
 }
 
 function moveSnake() {
+    //only determine now, so as not to switch direction and accidentally go into itself
+    determineDirection();
     //add block to head, in direction
     //head = last element, add to head = push
     //tail = first element, remove tail = shift
@@ -137,33 +136,62 @@ function moveSnake() {
 }
 
 function moveByKeyPress(e) { //testing
-    changeDirection(e);
+    handleKeyPress(e);
     gameLoop();
 }
 
-var direction = 'down';
+function pauseSnake() {
+    clearInterval(snakeInterval);
+    playing = false;
+}
 
-function changeDirection(e) {
+function handleKeyPress(e) {
     switch (e.key) {
+        case " ":
+            if (!started && !playing) {
+                setupSnake();
+            } else if (!playing) {
+                snakeInterval = setInterval(gameLoop, 150); // live
+                playing = true;
+            } else {
+                pauseSnake();
+            }
+            break;
         case "ArrowUp":
-            dirY = -1;
-            dirX = 0;
+            newDirection = "up";
             break;
         case "ArrowDown":
-            dirY = 1;
-            dirX = 0;
+            newDirection = "down";
             break;
         case "ArrowLeft":
-            dirY = 0;
-            dirX = -1;
+            newDirection = "left";
             break;
         case "ArrowRight":
-            dirY = 0;
-            dirX = 1;
+            newDirection = "right";
             break;
     }
 }
 
-// document.addEventListener("keydown", moveByKeyPress); // testing
-document.addEventListener("keydown", changeDirection); // "live"
-var snakeInterval = setInterval(gameLoop, 200); // live
+var newDirection = "";
+var oldDirection = "down";
+
+function determineDirection() {
+    switch (newDirection) {
+        //new = opposite of old, do nothing
+        case "up":
+            if (dirY != 1) { dirY = -1; dirX = 0; oldDirection = newDirection }
+            break;
+        case "down":
+            if (dirY != -1) { dirY = 1; dirX = 0; oldDirection = newDirection }
+            break;
+        case "left":
+            if (dirX != 1) { dirY = 0; dirX = -1; oldDirection = newDirection }
+            break;
+        case "right":
+            if (dirX != -1) { dirY = 0; dirX = 1; oldDirection = newDirection }
+            break;
+    }
+}
+
+document.addEventListener("keydown", handleKeyPress); // testing
+var snakeInterval = null;

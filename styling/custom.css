@@ -17,6 +17,13 @@ body {
   overflow: hidden;
 }
 
+.snake {
+  min-height: calc(100% - 24px);
+  min-width: 100%;
+  max-height: calc(100% - 24px);
+  max-width: 100%;
+}
+
 .nav-pane {
   position: fixed;
   top: 0;
