@@ -168,6 +168,15 @@ body {
   display: inline-block;
 }
 
+.title-bar {
+  display: inline-block;
+  position: relative;
+  height: 24px;
+  text-align: center;
+  font-family: "Jersey 10", sans-serif;
+  font-size: 24px;
+}
+
 .close-button {
   position: relative;
   height: 24px;
