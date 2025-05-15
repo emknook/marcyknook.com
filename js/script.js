@@ -1,9 +1,8 @@
-
 let settings = {};
 let highestZ = 0;
 const navItems = document.querySelectorAll(".nav-item");
 const appElements = document.querySelectorAll(".app-content");
-const topBar = document.querySelectorAll(".topBar");
+const topBars = document.querySelectorAll(".topBar");
 let isDragging = false;
 let currentlyResizing;
 let startX, startY, startWidth, startHeight, startPosLeft;
@@ -94,6 +93,23 @@ function startDrag(topBar, x, y) {
     offsetX = x - windowEl.offsetLeft;
     offsetY = y - windowEl.offsetTop;
     topBar.style.cursor = "grabbing";
+
+    document.addEventListener("mousemove", (e) => {
+        onDrag(e.clientX, e.clientY);
+    });
+
+    document.addEventListener("touchmove", (e) => {
+        const touch = e.touches[0];
+        onDrag(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    document.addEventListener("mouseup", (e) => {
+        stopDrag(e);
+    });
+
+    document.addEventListener("touchend", (e) => {
+        stopDrag(e)
+    });
 }
 
 function onDrag(x, y) {
@@ -107,13 +123,13 @@ function onDrag(x, y) {
     }
 }
 
-function stopDrag(topBar) {
+function stopDrag(e) {
     let app = currentlyDragging;
     if (app) {
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
         currentlyDragging = null;
         isDragging = false;
-        topBar.style.cursor = "grab";
+        e.target.style.cursor = "grab";
     }
 }
 
@@ -166,7 +182,7 @@ function loadSettings() {
         });
     });
 
-    topBar.forEach(topBar => {
+    topBars.forEach(topBar => {
         topBar.addEventListener("mousedown", (e) => {
             startDrag(topBar, e.clientX, e.clientY);
         });
@@ -175,21 +191,6 @@ function loadSettings() {
             const touch = e.touches[0];
             startDrag(topBar, touch.clientX, touch.clientY);
         });
-
-        document.addEventListener("mousemove", (e) => {
-            onDrag(e.clientX, e.clientY);
-        });
-
-        document.addEventListener("touchmove", (e) => {
-            const touch = e.touches[0];
-            onDrag(touch.clientX, touch.clientY);
-        }, { passive: false });
-
-        document.addEventListener("mouseup", () => {
-            stopDrag(topBar);
-        });
-
-        document.addEventListener("touchend", stopDrag);
     });
 }
 
