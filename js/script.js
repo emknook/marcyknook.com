@@ -86,7 +86,7 @@ function stopResize() {
         document.removeEventListener('mouseup', stopResize);
         document.removeEventListener('touchmove', onResize);
         document.removeEventListener('touchend', stopResize);
-        updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
+        updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
     }
     currentlyResizing = null;
 }
@@ -132,11 +132,11 @@ function onDrag(x, y) {
 function stopDrag(e) {
     let app = currentlyDragging;
     if (app) {
-        updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
-        currentlyDragging = null;
+        updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
         isDragging = false;
         e.target.style.cursor = "grab";
     }
+    currentlyDragging = null;
 }
 
 function loadSettings() {
@@ -190,12 +190,16 @@ function loadSettings() {
 
     topBars.forEach(topBar => {
         topBar.addEventListener("mousedown", (e) => {
-            startDrag(topBar, e.clientX, e.clientY);
+            if (!currentlyResizing) {
+                startDrag(topBar, e.clientX, e.clientY);
+            }
         });
 
         topBar.addEventListener("touchstart", (e) => {
-            const touch = e.touches[0];
-            startDrag(topBar, touch.clientX, touch.clientY);
+            if (!currentlyResizing) {
+                const touch = e.touches[0];
+                startDrag(topBar, touch.clientX, touch.clientY);
+            }
         });
     });
 }
@@ -206,9 +210,9 @@ function saveSettings() {
 
 }
 
-function updateApp(name, x, y, height, width) {
+function updateApp(name, x, y, height, width, z) {
     const index = settings.appSettings.findIndex(app => app.name === name);
-    let newApp = { name, x, y, height, width };
+    let newApp = { name, x, y, height, width, z };
     if (index !== -1) {
         // App exists, update it
         settings.appSettings[index] = { ...settings.appSettings[index], ...newApp };
@@ -238,13 +242,14 @@ function openApp(targetId) {
     index = settings.appSettings.findIndex(app => app.name === targetId);
     appElements.forEach(app => {
         if (app.id === targetId) {
+            setHighest(app);
             app.style.height = settings.appSettings[index].height;
             app.style.width = settings.appSettings[index].width;
             app.style.top = settings.appSettings[index].y;
             app.style.left = settings.appSettings[index].x;
-            setHighest(app);
+            app.style.zIndex = settings.appSettings[index].z;
             app.classList.add("show");
-            updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width);
+            updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
         }
     });
 }
@@ -267,68 +272,62 @@ function closeApp(targetId) {
     currentlyClosing = true;
 }
 
-document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return; // your own drag tracking boolean
+// document.addEventListener('mousemove', (e) => {
+//     if (!isDragging) return; // your own drag tracking boolean
 
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
-    const winWidth = window.innerWidth;
-    const halfWidth = winWidth / 2 - 20;
-    const halfX = winWidth / 2 + 10;
-    const itemWidth = winWidth - 20;
+//     const mouseX = e.clientX;
+//     const mouseY = e.clientY;
+//     const winWidth = window.innerWidth;
+//     const halfWidth = winWidth / 2 - 20;
+//     const halfX = winWidth / 2 + 10;
+//     const itemWidth = winWidth - 20;
 
-    const winHeight = window.innerHeight;
-    const halfHeight = winHeight / 2 - 20;
-    const halfY = winHeight / 2 + 10;
-    const itemHeight = winHeight - 20;
+//     const winHeight = window.innerHeight;
+//     const halfHeight = winHeight / 2 - 20;
+//     const halfY = winHeight / 2 + 10;
+//     const itemHeight = winHeight - 20;
 
-    let snapArea = null;
+//     let snapArea = null;
 
-    if (mouseX > winWidth - windowMarginX) {
-        if (mouseY > winHeight - windowMarginY) {
-            // right lower corner
-            snapArea = { left: halfX, top: halfY, width: halfWidth, height: halfHeight };
-        } else if (mouseY < windowMarginY) {
-            // right upper corner
-            snapArea = { left: halfX, top: 10, width: halfWidth, height: halfHeight };
-        } else {
-            // right side
-            snapArea = { left: halfX, top: 10, width: halfWidth, height: itemHeight };
-        }
-    } else if (mouseX < windowMarginX + navbarWidth) {
-        if (mouseY > winHeight - windowMarginY) {
-            // left lower corner
-            snapArea = { left: 10, top: halfY, width: halfWidth, height: halfHeight };
-        } else if (mouseY < windowMarginY) {
-            // left upper corner
-            snapArea = { left: 10, top: 10, width: halfWidth, height: halfHeight };
-        } else {
-            // left side
-            snapArea = { left: 10, top: 10, width: halfWidth, height: itemHeight };
-        }
-    } else if (mouseY < windowMarginY) {
-        // fill upper half
-        snapArea = { left: 10, top: 10, width: itemWidth, height: halfHeight };
-    } else if (mouseY > winHeight - windowMarginY) {
-        // fill lower half
-        snapArea = { left: 10, top: halfY, width: itemWidth, height: halfHeight };
-    } else {
-        isSuggesting = false;
-    }
-    if (snapArea) {
-        isSuggesting = true;
-        snapOverlay.style.display = 'block';
-        snapOverlay.style.left = `${snapArea.left}px`;
-        snapOverlay.style.top = `${snapArea.top}px`;
-        snapOverlay.style.width = `${snapArea.width}px`;
-        snapOverlay.style.height = `${snapArea.height}px`;
-    } else {
-        snapOverlay.style.display = 'none';
-    }
-});
-
-document.addEventListener('mouseup', () => {
-    isDragging = false;
-    isSuggesting = false;
-    snapOverlay.style.display = 'none';
-});
+//     if (mouseX > winWidth - windowMarginX) {
+//         if (mouseY > winHeight - windowMarginY) {
+//             // right lower corner
+//             snapArea = { left: halfX, top: halfY, width: halfWidth, height: halfHeight };
+//         } else if (mouseY < windowMarginY) {
+//             // right upper corner
+//             snapArea = { left: halfX, top: 10, width: halfWidth, height: halfHeight };
+//         } else {
+//             // right side
+//             snapArea = { left: halfX, top: 10, width: halfWidth, height: itemHeight };
+//         }
+//     } else if (mouseX < windowMarginX + navbarWidth) {
+//         if (mouseY > winHeight - windowMarginY) {
+//             // left lower corner
+//             snapArea = { left: 10, top: halfY, width: halfWidth, height: halfHeight };
+//         } else if (mouseY < windowMarginY) {
+//             // left upper corner
+//             snapArea = { left: 10, top: 10, width: halfWidth, height: halfHeight };
+//         } else {
+//             // left side
+//             snapArea = { left: 10, top: 10, width: halfWidth, height: itemHeight };
+//         }
+//     } else if (mouseY < windowMarginY) {
+//         // fill upper half
+//         snapArea = { left: 10, top: 10, width: itemWidth, height: halfHeight };
+//     } else if (mouseY > winHeight - windowMarginY) {
+//         // fill lower half
+//         snapArea = { left: 10, top: halfY, width: itemWidth, height: halfHeight };
+//     } else {
+//         isSuggesting = false;
+//     }
+//     if (snapArea) {
+//         isSuggesting = true;
+//         snapOverlay.style.display = 'block';
+//         snapOverlay.style.left = `${snapArea.left}px`;
+//         snapOverlay.style.top = `${snapArea.top}px`;
+//         snapOverlay.style.width = `${snapArea.width}px`;
+//         snapOverlay.style.height = `${snapArea.height}px`;
+//     } else {
+//         snapOverlay.style.display = 'none';
+//     }
+// });
