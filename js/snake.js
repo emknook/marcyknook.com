@@ -17,6 +17,7 @@ var started = false;
 var playing = false;
 var score = 0;
 var berries = [];
+var bGameOver = false;
 function addBerries(min, max) {
     //add at least min amount of berries, plus max
     for (var i = 0; (i < Math.floor(Math.random() * max) + min) && i < max; i++) {
@@ -115,6 +116,7 @@ function drawBerries() {
 
 function gameOver() {
     clearInterval(snakeInterval);
+    bGameOver = true;
 }
 
 function moveSnake() {
@@ -146,29 +148,31 @@ function pauseSnake() {
 }
 
 function handleKeyPress(e) {
-    switch (e.key) {
-        case " ":
-            if (!started && !playing) {
-                setupSnake();
-            } else if (!playing) {
-                snakeInterval = setInterval(gameLoop, 150); // live
-                playing = true;
-            } else {
-                pauseSnake();
-            }
-            break;
-        case "ArrowUp":
-            newDirection = "up";
-            break;
-        case "ArrowDown":
-            newDirection = "down";
-            break;
-        case "ArrowLeft":
-            newDirection = "left";
-            break;
-        case "ArrowRight":
-            newDirection = "right";
-            break;
+    if (!bGameOver | !started) {
+        switch (e.key) {
+            case " ":
+                if (!started && !playing) {
+                    setupSnake();
+                } else if (!playing) {
+                    snakeInterval = setInterval(gameLoop, 200); // live
+                    playing = true;
+                } else {
+                    pauseSnake();
+                }
+                break;
+            case "ArrowUp":
+                newDirection = "up";
+                break;
+            case "ArrowDown":
+                newDirection = "down";
+                break;
+            case "ArrowLeft":
+                newDirection = "left";
+                break;
+            case "ArrowRight":
+                newDirection = "right";
+                break;
+        }
     }
 }
 

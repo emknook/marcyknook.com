@@ -24,6 +24,18 @@ body {
   max-width: 100%;
 }
 
+#snap-suggestion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgba(170, 170, 170, 0.3);
+  border: 2px rgba(170, 170, 170, 0.5);
+  pointer-events: none;
+  display: none;
+  transition: all 0.15s ease;
+  z-index: 9999;
+}
+
 .nav-pane {
   position: fixed;
   top: 0;
