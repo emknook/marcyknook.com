@@ -10,12 +10,12 @@ let handleMouseMoveDrag, handleTouchMoveDrag, handleMouseMoveResize, handleTouch
 let offsetX, offsetY;
 let currentlyDragging;
 let currentlyClosing = false;
-
+let suggestion = '';
 let isSuggesting = false;
 const snapOverlay = document.getElementById('snap-suggestion');
-const windowMarginY = 10;
+const windowMarginY = 30;
 const windowMarginX = 50;
-const navbarWidth = 60; // if applicable
+const navbarWidth = 52;
 
 function resetSettings() {
     appElements.forEach(app => {
@@ -95,11 +95,11 @@ function stopResize() {
 
 function startDrag(topBar, x, y) {
     // save startLocation for dragging
-    let windowEl = topBar.parentElement;
+    let draggingEl = topBar.parentElement;
     isDragging = true; //boolean (can also be currentlyDragging != null?)
     currentlyDragging = topBar.parentElement;
-    offsetX = x - windowEl.offsetLeft;
-    offsetY = y - windowEl.offsetTop;
+    offsetX = x - draggingEl.offsetLeft;
+    offsetY = y - draggingEl.offsetTop;
     topBar.style.cursor = "grabbing";
 
     handleMouseMoveDrag = (e) => onDrag(e.clientX, e.clientY);
@@ -126,7 +126,7 @@ function onDrag(x, y) {
     }
 }
 
-function stopDrag(e) {
+function stopDrag() {
     let app = currentlyDragging;
     if (app) {
         document.removeEventListener("mousemove", handleMouseMoveDrag);
@@ -134,9 +134,21 @@ function stopDrag(e) {
         document.removeEventListener("mousemove", handleSnappingZone);
         document.removeEventListener("mouseup", stopDrag);
         document.removeEventListener("touchend", stopDrag);
+
+        if (isSuggesting) {
+            switch (suggestion) {
+                case "":
+                    break;
+                case "th":
+                    break;
+                case "tr":
+                    break;
+            }
+        }
+
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
         isDragging = false;
-        e.target.style.cursor = "grab";
+        currentlyDragging.querySelectorAll('.topBar')[0].style.cursor = "grab";
     }
     currentlyDragging = null;
 }
@@ -156,8 +168,6 @@ function loadSettings() {
     }
 
     appElements.forEach(app => {
-        highestZ = app.style.zIndex > highestZ ? app.style.zIndex : highestZ;
-
         app.addEventListener('mousedown', () => {
             setHighest(app);
         });
@@ -210,24 +220,35 @@ function loadSettings() {
 }
 
 function fillSettingBlocks() {
-    const settingContent = document.querySelectorAll("#settings #content")[0];
-    for (const app in settings.appSettings) {
+    const settingContent = document.querySelector("#appSettings");
+    settingContent.innerHTML = "";
+    for (const app of settings.appSettings) {
         //create div
         const appInfoBlock = document.createElement('div');
-
+        appInfoBlock.classList.add('settingsBlock');
+        const appInfoRow = "Name: " + app.name +
+            "\nWidth:" + app.width +
+            "\nHeight:" + app.height +
+            "\nX:" + app.x +
+            "\nY:" + app.y +
+            "\nZ:" + app.z;
+        appInfoBlock.innerText = appInfoRow;
         //name
         //width
         //height
         //x, y, z
         //extra settings?
         //open / close can be saved here?
+
+
+        settingContent.appendChild(appInfoBlock);
     }
 
 }
 
 function saveSettings() {
     localStorage.setItem('userSettings', JSON.stringify(settings));
-
+    fillSettingBlocks();
 
 }
 
@@ -241,7 +262,6 @@ function updateApp(name, x, y, height, width, z) {
         // App doesn't exist, add it
         settings.appSettings.push(newApp);
     }
-    saveSettings()
 }
 
 function openApp(targetId, forceHighest) {
@@ -275,12 +295,14 @@ function openApp(targetId, forceHighest) {
             updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
         }
     });
+    saveSettings();
 }
 
 function closeApp(targetId) {
     appElements.forEach(app => {
         if (app.id === targetId) {
             app.classList.remove('show');
+            app.style.zIndex = 0;
         }
     });
     navItems.forEach(item => {
@@ -297,16 +319,16 @@ function closeApp(targetId) {
 }
 
 function handleSnappingZone(e) {
-    if (!isDragging) return; // your own drag tracking boolean
-
     const mouseX = e.clientX;
     const mouseY = e.clientY;
-    const winWidth = window.innerWidth;
+
+    const windowElRect = document.querySelector('.window').getBoundingClientRect();
+    const winWidth = windowElRect.width;
     const halfWidth = winWidth / 2 - 20;
     const halfX = winWidth / 2 + 10;
     const itemWidth = winWidth - 20;
 
-    const winHeight = window.innerHeight;
+    const winHeight = windowElRect.height;
     const halfHeight = winHeight / 2 - 20;
     const halfY = winHeight / 2 + 10;
     const itemHeight = winHeight - 20;
@@ -316,31 +338,31 @@ function handleSnappingZone(e) {
     if (mouseX > winWidth - windowMarginX) {
         if (mouseY > winHeight - windowMarginY) {
             // right lower corner
-            snapArea = { left: halfX, top: halfY, width: halfWidth, height: halfHeight };
+            snapArea = { left: halfX + navbarWidth, top: halfY, width: halfWidth, height: halfHeight };
         } else if (mouseY < windowMarginY) {
             // right upper corner
-            snapArea = { left: halfX, top: 10, width: halfWidth, height: halfHeight };
+            snapArea = { left: halfX + navbarWidth, top: 10, width: halfWidth, height: halfHeight };
         } else {
             // right side
-            snapArea = { left: halfX, top: 10, width: halfWidth, height: itemHeight };
+            snapArea = { left: halfX + navbarWidth, top: 10, width: halfWidth, height: itemHeight };
         }
     } else if (mouseX < windowMarginX + navbarWidth) {
         if (mouseY > winHeight - windowMarginY) {
             // left lower corner
-            snapArea = { left: 10, top: halfY, width: halfWidth, height: halfHeight };
+            snapArea = { left: 10 + navbarWidth, top: halfY, width: halfWidth, height: halfHeight };
         } else if (mouseY < windowMarginY) {
             // left upper corner
-            snapArea = { left: 10, top: 10, width: halfWidth, height: halfHeight };
+            snapArea = { left: 10 + navbarWidth, top: 10, width: halfWidth, height: halfHeight };
         } else {
             // left side
-            snapArea = { left: 10, top: 10, width: halfWidth, height: itemHeight };
+            snapArea = { left: 10 + navbarWidth, top: 10, width: halfWidth, height: itemHeight };
         }
     } else if (mouseY < windowMarginY) {
         // fill upper half
-        snapArea = { left: 10, top: 10, width: itemWidth, height: halfHeight };
+        snapArea = { left: 10 + navbarWidth, top: 10, width: itemWidth, height: halfHeight };
     } else if (mouseY > winHeight - windowMarginY) {
         // fill lower half
-        snapArea = { left: 10, top: halfY, width: itemWidth, height: halfHeight };
+        snapArea = { left: 10 + navbarWidth, top: halfY, width: itemWidth, height: halfHeight };
     } else {
         isSuggesting = false;
     }

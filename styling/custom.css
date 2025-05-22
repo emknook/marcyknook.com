@@ -15,6 +15,27 @@ body {
   font-family: sans-serif;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+}
+
+.settingsBlock {
+  display: inline-block;
+  border: 1px solid lightgray;
+  border-radius: 3px;
+  max-width: max-content;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  min-width: 150px;
+}
+
+.appSettings {
+  padding-top: 10px;
+  padding-right: 10px;
+}
+
+.window {
+  flex: 1;
 }
 
 .snake {
@@ -37,7 +58,6 @@ body {
 }
 
 .nav-pane {
-  position: fixed;
   top: 0;
   left: 0;
   height: 100%;
