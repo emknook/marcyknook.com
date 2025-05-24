@@ -40,11 +40,8 @@ function snapWindowToZone(el, zone) {
     el.style.height = `${zone.height * h}px`;
 }
 
-
+resetSettings();
 function resetSettings() {
-    appElements.forEach(app => {
-        closeApp(app.id)
-    });
     settings = {
         theme: 'dark',
         fontSize: 'large',
@@ -52,7 +49,10 @@ function resetSettings() {
         appSettings: [],
         highestZ: "1"
     };
-    saveSettings()
+    appElements.forEach(app => {
+        closeApp(app.id)
+    });
+    saveSettings();
     openApp('app0', false);
 }
 

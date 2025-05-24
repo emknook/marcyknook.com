@@ -19,7 +19,10 @@ let berries = [];
 let bGameOver = false;
 let newDirection = "";
 let oldDirection = "down";
-
+cnvsCtx.font = '20px Arial';
+cnvsCtx.fillStyle = 'white';
+cnvsCtx.textBaseline = 'top';
+cnvsCtx.fillText('Press space to start!', 0, 0);
 function addBerries(min, max) {
     //add at least min amount of berries, plus max
     for (var i = 0; (i < Math.floor(Math.random() * max) + min) && i < max; i++) {
@@ -46,17 +49,14 @@ function setupSnake() {
 function gameLoop() {
     //functions
     moveSnake();
-    updateScore();
     //determine size of field
     determineSize();
     //draw
     cnvsCtx.clearRect(0, 0, fieldSize, fieldSize);
     drawBerries();
     drawSnake();
-}
-
-function updateScore() {
-
+    drawScore();
+    drawDirection();
 }
 
 function determineSize() {
@@ -68,7 +68,6 @@ function determineSize() {
     field.style.height = size + 'px';
     field.width = size;
     field.height = size;
-
 }
 
 function handleCollision() {
@@ -111,7 +110,7 @@ function handleCollision() {
 }
 
 function drawSnake() {
-    cnvsCtx.fillStyle = "white";
+    cnvsCtx.fillStyle = "lime";
     snake.forEach(e => cnvsCtx.fillRect(e.x * tileSize, e.y * tileSize, tileSize, tileSize));
     cnvsCtx.strokeStyle = "black";
     snake.forEach(e => cnvsCtx.strokeRect(e.x * tileSize + 1, e.y * tileSize + 1, tileSize - 2, tileSize - 2));
@@ -120,6 +119,20 @@ function drawSnake() {
 function drawBerries() {
     cnvsCtx.fillStyle = "red";
     berries.forEach(e => cnvsCtx.fillRect(e.x * tileSize, e.y * tileSize, tileSize, tileSize));
+}
+
+function drawScore() {
+    cnvsCtx.font = '20px Arial';
+    cnvsCtx.fillStyle = 'white';
+    cnvsCtx.textBaseline = 'top';
+    cnvsCtx.fillText('Score:' + score, 0, 0);
+}
+
+function drawDirection() {
+    cnvsCtx.font = '20px Arial';
+    cnvsCtx.fillStyle = 'white';
+    cnvsCtx.textBaseline = 'top';
+    cnvsCtx.fillText('Direction: ' + newDirection, 0, 30);
 }
 
 function gameOver() {
@@ -181,6 +194,7 @@ function handleKeyPress(e) {
                 newDirection = "right";
                 break;
         }
+        drawDirection();
     }
 }
 
