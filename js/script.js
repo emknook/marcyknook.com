@@ -35,7 +35,7 @@ function snapWindowToZone(el, zone) {
     const h = windowElRect.height;
 
     el.style.position = 'absolute';
-    el.style.left = `${zone.x * w}px`;
+    el.style.left = `${(zone.x * w) + navbarWidth}px`;
     el.style.top = `${zone.y * h}px`;
     el.style.width = `${zone.width * w}px`;
     el.style.height = `${zone.height * h}px`;
@@ -386,7 +386,7 @@ function handleSnappingZone(e) {
         isSuggesting = true;
         const zone = snapZones.find(z => z.name === snapArea);
         snapOverlay.style.display = 'block';
-        snapOverlay.style.left = `${zone.x * winWidth}px`;
+        snapOverlay.style.left = `${(zone.x * winWidth) + navbarWidth}px`;
         snapOverlay.style.top = `${zone.y * winHeight}px`;
         snapOverlay.style.width = `${zone.width * winWidth}px`;
         snapOverlay.style.height = `${zone.height * winHeight}px`;
