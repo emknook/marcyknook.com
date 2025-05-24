@@ -45,16 +45,22 @@ body {
   max-width: 100%;
 }
 
+.snake-score {
+  padding: 10px;
+}
+
 #snap-suggestion {
   position: fixed;
   top: 0;
   left: 0;
   background-color: rgba(170, 170, 170, 0.3);
   border: 2px rgba(170, 170, 170, 0.5);
+  border-radius: 5px;
   pointer-events: none;
   display: none;
   transition: all 0.15s ease;
   z-index: 9999;
+  backdrop-filter: blur(5px);
 }
 
 .nav-pane {

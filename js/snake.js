@@ -1,23 +1,25 @@
-//px => make into variable defined by size of window
-var tileSize = 20;
-var fieldSize = 10; //x & y (0 - 19)
-var snakeContainer = document.getElementById("snake").querySelector('[id="content"]');
-var field = document.createElement("canvas");
+let tileSize = 20;
+let fieldSize = 10;
+let snakeContainer = document.getElementById("snake").querySelector('[id="content"]');
+let field = document.createElement("canvas");
 snakeContainer.append(field);
-var canvasSize = tileSize * fieldSize;
+let canvasSize = tileSize * fieldSize;
 const cnvsCtx = field.getContext("2d");
-// var scoreDiv = document.getElementById('score');
+// let scoreDiv = document.getElementById('score');
 //setup snake, array of "blocks"/"tiles" with x and y (the more blocks, the longer the snake)
-var snake = [{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) },
-{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) + 1 },
-{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) + 2 }];
-var dirX = 0; // -1 = left 1 = right
-var dirY = 1; // -1 = up 1 = down
-var started = false;
-var playing = false;
-var score = 0;
-var berries = [];
-var bGameOver = false;
+let snake = [{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) - 1 },
+{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) },
+{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) + 1 }];
+let dirX = 0; // -1 = left 1 = right
+let dirY = 1; // -1 = up 1 = down
+let started = false;
+let playing = false;
+let score = 0;
+let berries = [];
+let bGameOver = false;
+let newDirection = "";
+let oldDirection = "down";
+
 function addBerries(min, max) {
     //add at least min amount of berries, plus max
     for (var i = 0; (i < Math.floor(Math.random() * max) + min) && i < max; i++) {
@@ -42,14 +44,19 @@ function setupSnake() {
 
 //do loop
 function gameLoop() {
-    //function
+    //functions
     moveSnake();
+    updateScore();
     //determine size of field
     determineSize();
     //draw
     cnvsCtx.clearRect(0, 0, fieldSize, fieldSize);
     drawBerries();
     drawSnake();
+}
+
+function updateScore() {
+
 }
 
 function determineSize() {
@@ -87,7 +94,6 @@ function handleCollision() {
         var berry = berries[i];
         if (head.x == berry.x && head.y == berry.y) {
             score++;
-            // scoreDiv.innerText = "Score: " + score;
             berryToRemove = i;
             break;
         }
@@ -178,9 +184,6 @@ function handleKeyPress(e) {
     }
 }
 
-var newDirection = "";
-var oldDirection = "down";
-
 function determineDirection() {
     switch (newDirection) {
         //new = opposite of old, do nothing
@@ -199,5 +202,5 @@ function determineDirection() {
     }
 }
 
-document.addEventListener("keydown", handleKeyPress); // testing
-var snakeInterval = null;
+document.addEventListener("keydown", handleKeyPress);
+let snakeInterval = null;

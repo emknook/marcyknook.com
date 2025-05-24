@@ -1,5 +1,4 @@
 let settings = {};
-let highestZ = 0;
 const navItems = document.querySelectorAll(".nav-item");
 const appElements = document.querySelectorAll(".app-content");
 const topBars = document.querySelectorAll(".topBar");
@@ -57,18 +56,19 @@ function resetSettings() {
     openApp('app0', false);
 }
 
-function setHighest(targetApp) {
-    if (highestZ + "" === targetApp.style.zIndex) return;
-    highestZ++;
-    targetApp.style.zIndex = highestZ;
-    settings.highestZ = highestZ;
+function setHighest(app) {
+    if (settings.highestZ + "" === app.style.zIndex) return;
+    settings.highestZ++;
+    app.style.zIndex = settings.highestZ;
     if (!currentlyClosing) {
         navItems.forEach(navItem => {
-            navItem.dataset.target === targetApp.id ? navItem.classList.add("active") : navItem.classList.remove("active");
+            navItem.dataset.target === app.id ? navItem.classList.add("active") : navItem.classList.remove("active");
         });
     } else {
         currentlyClosing = false;
     }
+    updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
+    saveSettings();
 }
 
 function startResize(app, x, y) {
@@ -114,6 +114,7 @@ function stopResize() {
         document.removeEventListener('touchmove', handleTouchMoveResize);
         document.removeEventListener('touchend', stopResize);
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
+        saveSettings();
     }
     currentlyResizing = null;
 }
@@ -170,6 +171,7 @@ function stopDrag() {
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
         isDragging = false;
         currentlyDragging.querySelectorAll('.topBar')[0].style.cursor = "grab";
+        saveSettings();
     }
     currentlyDragging = null;
 }
@@ -184,7 +186,6 @@ function loadSettings() {
         settings.openApps.forEach(e => {
             openApp(e, false);
         });
-        highestZ = settings.highestZ;
     } else {
         resetSettings();
     }
@@ -255,14 +256,6 @@ function fillSettingBlocks() {
             "\nY:" + app.y +
             "\nZ:" + app.z;
         appInfoBlock.innerText = appInfoRow;
-        //name
-        //width
-        //height
-        //x, y, z
-        //extra settings?
-        //open / close can be saved here?
-
-
         settingContent.appendChild(appInfoBlock);
     }
 }
@@ -322,7 +315,7 @@ function closeApp(targetId) {
     appElements.forEach(app => {
         if (app.id === targetId) {
             app.classList.remove('show');
-            app.style.zIndex = 0;
+            app.style.zIndex = '0';
         }
     });
     navItems.forEach(item => {
@@ -383,6 +376,7 @@ function handleSnappingZone(e) {
         snapOverlay.style.top = `${zone.y * winHeight}px`;
         snapOverlay.style.width = `${zone.width * winWidth}px`;
         snapOverlay.style.height = `${zone.height * winHeight}px`;
+        snapOverlay.style.zIndex = settings.highestZ - 1;
     } else {
         snapOverlay.style.display = 'none';
     }
