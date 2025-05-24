@@ -1,6 +1,6 @@
 //px => make into variable defined by size of window
 var tileSize = 20;
-var fieldSize = 15; //x & y (0 - 19)
+var fieldSize = 10; //x & y (0 - 19)
 var snakeContainer = document.getElementById("snake").querySelector('[id="content"]');
 var field = document.createElement("canvas");
 snakeContainer.append(field);
@@ -25,6 +25,8 @@ function addBerries(min, max) {
         var posY = Math.floor(Math.random() * fieldSize);
         if (!snake.find(e => e.x == posX && e.y == posY)) {
             berries.push({ x: posX, y: posY });
+        } else {
+            addBerries(1, 1);
         }
     }
 }

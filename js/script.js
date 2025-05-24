@@ -16,6 +16,31 @@ const snapOverlay = document.getElementById('snap-suggestion');
 const windowMarginY = 30;
 const windowMarginX = 50;
 const navbarWidth = 52;
+let snapArea = '';
+const snapZones = [
+    { name: 'top-left', x: 0, y: 0, width: 0.5, height: 0.5 },
+    { name: 'top-right', x: 0.5, y: 0, width: 0.5, height: 0.5 },
+    { name: 'bottom-left', x: 0, y: 0.5, width: 0.5, height: 0.5 },
+    { name: 'bottom-right', x: 0.5, y: 0.5, width: 0.5, height: 0.5 },
+    { name: 'left-half', x: 0, y: 0, width: 0.5, height: 1 },
+    { name: 'right-half', x: 0.5, y: 0, width: 0.5, height: 1 },
+    { name: 'top-half', x: 0, y: 0, width: 1, height: 0.5 },
+    { name: 'bottom-half', x: 0, y: 0.5, width: 1, height: 0.5 },
+    { name: 'full', x: 0, y: 0, width: 1, height: 1 }
+];
+
+function snapWindowToZone(el, zone) {
+    const windowElRect = el.parentElement.getBoundingClientRect();
+    const w = windowElRect.width;
+    const h = windowElRect.height;
+
+    el.style.position = 'absolute';
+    el.style.left = `${zone.x * w}px`;
+    el.style.top = `${zone.y * h}px`;
+    el.style.width = `${zone.width * w}px`;
+    el.style.height = `${zone.height * h}px`;
+}
+
 
 function resetSettings() {
     appElements.forEach(app => {
@@ -136,14 +161,10 @@ function stopDrag() {
         document.removeEventListener("touchend", stopDrag);
 
         if (isSuggesting) {
-            switch (suggestion) {
-                case "":
-                    break;
-                case "th":
-                    break;
-                case "tr":
-                    break;
-            }
+            const zone = snapZones.find(z => z.name === snapArea);
+            snapWindowToZone(app, zone);
+            isSuggesting = false;
+            snapOverlay.style.display = 'none';
         }
 
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
@@ -324,55 +345,51 @@ function handleSnappingZone(e) {
 
     const windowElRect = document.querySelector('.window').getBoundingClientRect();
     const winWidth = windowElRect.width;
-    const halfWidth = winWidth / 2 - 20;
-    const halfX = winWidth / 2 + 10;
-    const itemWidth = winWidth - 20;
 
     const winHeight = windowElRect.height;
-    const halfHeight = winHeight / 2 - 20;
-    const halfY = winHeight / 2 + 10;
-    const itemHeight = winHeight - 20;
 
-    let snapArea = null;
+    snapArea = null;
 
+    // { name: 'top-left', x: 0, y: 0, width: 0.5, height: 0.5 },
+    // { name: 'top-right', x: 0.5, y: 0, width: 0.5, height: 0.5 },
+    // { name: 'bottom-left', x: 0, y: 0.5, width: 0.5, height: 0.5 },
+    // { name: 'bottom-right', x: 0.5, y: 0.5, width: 0.5, height: 0.5 },
+    // { name: 'left-half', x: 0, y: 0, width: 0.5, height: 1 },
+    // { name: 'right-half', x: 0.5, y: 0, width: 0.5, height: 1 },
+    // { name: 'top-half', x: 0, y: 0, width: 1, height: 0.5 },
+    // { name: 'bottom-half', x: 0, y: 0.5, width: 1, height: 0.5 },
+    // { name: 'full', x: 0, y: 0, width: 1, height: 1 }
     if (mouseX > winWidth - windowMarginX) {
         if (mouseY > winHeight - windowMarginY) {
-            // right lower corner
-            snapArea = { left: halfX + navbarWidth, top: halfY, width: halfWidth, height: halfHeight };
+            snapArea = 'bottom-right';
         } else if (mouseY < windowMarginY) {
-            // right upper corner
-            snapArea = { left: halfX + navbarWidth, top: 10, width: halfWidth, height: halfHeight };
+            snapArea = 'top-right';
         } else {
-            // right side
-            snapArea = { left: halfX + navbarWidth, top: 10, width: halfWidth, height: itemHeight };
+            snapArea = 'right-half';
         }
     } else if (mouseX < windowMarginX + navbarWidth) {
         if (mouseY > winHeight - windowMarginY) {
-            // left lower corner
-            snapArea = { left: 10 + navbarWidth, top: halfY, width: halfWidth, height: halfHeight };
+            snapArea = 'bottom-left';
         } else if (mouseY < windowMarginY) {
-            // left upper corner
-            snapArea = { left: 10 + navbarWidth, top: 10, width: halfWidth, height: halfHeight };
+            snapArea = 'top-left';
         } else {
-            // left side
-            snapArea = { left: 10 + navbarWidth, top: 10, width: halfWidth, height: itemHeight };
+            snapArea = 'left-half';
         }
     } else if (mouseY < windowMarginY) {
-        // fill upper half
-        snapArea = { left: 10 + navbarWidth, top: 10, width: itemWidth, height: halfHeight };
+        snapArea = 'top-half';
     } else if (mouseY > winHeight - windowMarginY) {
-        // fill lower half
-        snapArea = { left: 10 + navbarWidth, top: halfY, width: itemWidth, height: halfHeight };
+        snapArea = 'bottom-half';
     } else {
         isSuggesting = false;
     }
     if (snapArea) {
         isSuggesting = true;
+        const zone = snapZones.find(z => z.name === snapArea);
         snapOverlay.style.display = 'block';
-        snapOverlay.style.left = `${snapArea.left}px`;
-        snapOverlay.style.top = `${snapArea.top}px`;
-        snapOverlay.style.width = `${snapArea.width}px`;
-        snapOverlay.style.height = `${snapArea.height}px`;
+        snapOverlay.style.left = `${zone.x * winWidth}px`;
+        snapOverlay.style.top = `${zone.y * winHeight}px`;
+        snapOverlay.style.width = `${zone.width * winWidth}px`;
+        snapOverlay.style.height = `${zone.height * winHeight}px`;
     } else {
         snapOverlay.style.display = 'none';
     }
