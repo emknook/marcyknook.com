@@ -68,7 +68,6 @@ function setHighest(targetApp) {
     }
 }
 
-//startResize => mousedown / touchstart
 function startResize(app, x, y) {
     currentlyResizing = app;
     startX = x;
@@ -89,7 +88,6 @@ function startResize(app, x, y) {
     document.addEventListener('touchend', stopResize);
 }
 
-//onResize => mousemove / touchmove
 function onResize(x, y) {
     if (currentlyResizing) {
         offsetX = x - startX;
@@ -105,7 +103,6 @@ function onResize(x, y) {
     }
 }
 
-//stopResize => mouseup / touchend
 function stopResize() {
     let app = currentlyResizing;
     if (app) {
@@ -264,13 +261,11 @@ function fillSettingBlocks() {
 
         settingContent.appendChild(appInfoBlock);
     }
-
 }
 
 function saveSettings() {
     localStorage.setItem('userSettings', JSON.stringify(settings));
     fillSettingBlocks();
-
 }
 
 function updateApp(name, x, y, height, width, z) {
@@ -349,16 +344,6 @@ function handleSnappingZone(e) {
     const winHeight = windowElRect.height;
 
     snapArea = null;
-
-    // { name: 'top-left', x: 0, y: 0, width: 0.5, height: 0.5 },
-    // { name: 'top-right', x: 0.5, y: 0, width: 0.5, height: 0.5 },
-    // { name: 'bottom-left', x: 0, y: 0.5, width: 0.5, height: 0.5 },
-    // { name: 'bottom-right', x: 0.5, y: 0.5, width: 0.5, height: 0.5 },
-    // { name: 'left-half', x: 0, y: 0, width: 0.5, height: 1 },
-    // { name: 'right-half', x: 0.5, y: 0, width: 0.5, height: 1 },
-    // { name: 'top-half', x: 0, y: 0, width: 1, height: 0.5 },
-    // { name: 'bottom-half', x: 0, y: 0.5, width: 1, height: 0.5 },
-    // { name: 'full', x: 0, y: 0, width: 1, height: 1 }
     if (mouseX > winWidth - windowMarginX) {
         if (mouseY > winHeight - windowMarginY) {
             snapArea = 'bottom-right';
@@ -376,7 +361,11 @@ function handleSnappingZone(e) {
             snapArea = 'left-half';
         }
     } else if (mouseY < windowMarginY) {
-        snapArea = 'top-half';
+        if (mouseX > winWidth / 2 + navbarWidth - windowMarginX && mouseX < windowMarginX + winWidth / 2 + navbarWidth) {
+            snapArea = 'full';
+        } else {
+            snapArea = 'top-half';
+        }
     } else if (mouseY > winHeight - windowMarginY) {
         snapArea = 'bottom-half';
     } else {
