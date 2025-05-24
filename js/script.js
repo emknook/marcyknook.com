@@ -50,15 +50,18 @@ function resetSettings() {
         theme: 'dark',
         fontSize: 'large',
         openApps: ['app0'],
-        appSettings: []
+        appSettings: [],
+        highestZ: "1"
     };
     saveSettings()
     openApp('app0', false);
 }
 
 function setHighest(targetApp) {
+    if (highestZ + "" === targetApp.style.zIndex) return;
     highestZ++;
     targetApp.style.zIndex = highestZ;
+    settings.highestZ = highestZ;
     if (!currentlyClosing) {
         navItems.forEach(navItem => {
             navItem.dataset.target === targetApp.id ? navItem.classList.add("active") : navItem.classList.remove("active");
@@ -181,6 +184,7 @@ function loadSettings() {
         settings.openApps.forEach(e => {
             openApp(e, false);
         });
+        highestZ = settings.highestZ;
     } else {
         resetSettings();
     }
