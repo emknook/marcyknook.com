@@ -5,7 +5,7 @@ const topBars = document.querySelectorAll(".topBar");
 let isDragging = false;
 let currentlyResizing;
 let startX, startY, startWidth, startHeight, startPosLeft;
-let handleMouseMoveDrag, handleTouchMoveDrag, handleMouseMoveResize, handleTouchMoveResize;
+let handleMouseMoveDrag, handleTouchMoveDrag, handleMouseMoveResize, handleTouchMoveResize, handleTouchSnappingZone, handleMouseSnappingZone;
 let offsetX, offsetY;
 let currentlyDragging;
 let currentlyClosing = false;
@@ -28,16 +28,17 @@ const snapZones = [
     { name: 'full', x: 0, y: 0, width: 1, height: 1 }
 ];
 
-function snapWindowToZone(el, zone) {
+function snapWindowToZone(el, zoneName) {
+    const zone = snapZones.find(z => z.name === zoneName);
     const windowElRect = el.parentElement.getBoundingClientRect();
     const w = windowElRect.width;
     const h = windowElRect.height;
 
     el.style.position = 'absolute';
-    el.style.left = `${(zone.x * w) + navbarWidth}px`;
-    el.style.top = `${zone.y * h}px`;
-    el.style.width = `${zone.width * w}px`;
-    el.style.height = `${zone.height * h}px`;
+    el.style.left = `${Math.floor(zone.x * w) + navbarWidth}px`;
+    el.style.top = `${Math.floor(zone.y * h)}px`;
+    el.style.width = `${Math.floor(zone.width * w)}px`;
+    el.style.height = `${Math.floor(zone.height * h)}px`;
 }
 
 resetSettings();
@@ -134,11 +135,17 @@ function startDrag(topBar, x, y) {
         onDrag(touch.clientX, touch.clientY);
     };
 
+    handleMouseSnappingZone = (e) => handleSnappingZone(e, e.clientX, e.clientY);
+    handleTouchSnappingZone = (e) => {
+        const touch = e.touches[0];
+        handleSnappingZone(e, touch.clientX, touch.clientY);
+    };
     document.addEventListener("mousemove", handleMouseMoveDrag);
     document.addEventListener("touchmove", handleTouchMoveDrag, { passive: false });
-    document.addEventListener("mousemove", handleSnappingZone);
+    document.addEventListener("mousemove", handleMouseSnappingZone);
     document.addEventListener("mouseup", stopDrag);
     document.addEventListener("touchend", stopDrag);
+    document.addEventListener("touchmove", handleTouchSnappingZone, { passive: false });
 }
 
 function onDrag(x, y) {
@@ -157,13 +164,13 @@ function stopDrag() {
     if (app) {
         document.removeEventListener("mousemove", handleMouseMoveDrag);
         document.removeEventListener("touchmove", handleTouchMoveDrag);
-        document.removeEventListener("mousemove", handleSnappingZone);
+        document.removeEventListener("mousemove", handleMouseSnappingZone);
+        document.removeEventListener("touchmove", handleTouchSnappingZone);
         document.removeEventListener("mouseup", stopDrag);
         document.removeEventListener("touchend", stopDrag);
 
         if (isSuggesting) {
-            const zone = snapZones.find(z => z.name === snapArea);
-            snapWindowToZone(app, zone);
+            snapWindowToZone(app, snapArea);
             isSuggesting = false;
             snapOverlay.style.display = 'none';
         }
@@ -206,6 +213,16 @@ function loadSettings() {
             e.preventDefault();
             const touch = e.touches[0];
             startResize(e.currentTarget.parentElement.parentElement, touch.clientX, touch.clientY);
+        });
+    });
+
+    const fullsizeButtons = document.querySelectorAll('.fullsize-button');
+    fullsizeButtons.forEach(button => {
+        button.addEventListener('mousedown', function (e) {
+            snapWindowToZone(e.target.parentElement.parentElement, 'full');
+        });
+        button.addEventListener('touchstart', function (e) {
+            snapWindowToZone(e.target.parentElement.parentElement, 'full');
         });
     });
 
@@ -331,9 +348,9 @@ function closeApp(targetId) {
     saveSettings();
 }
 
-function handleSnappingZone(e) {
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
+function handleSnappingZone(e, x, y) {
+    const mouseX = x;
+    const mouseY = y;
 
     const windowElRect = document.querySelector('.window').getBoundingClientRect();
     const winWidth = windowElRect.width;
@@ -368,15 +385,21 @@ function handleSnappingZone(e) {
     } else {
         isSuggesting = false;
     }
-    if (snapArea) {
+    if (!isSuggesting && snapArea) {
         isSuggesting = true;
-        const zone = snapZones.find(z => z.name === snapArea);
+        const app = e.target.parentElement;
         snapOverlay.style.display = 'block';
+        snapOverlay.style.left = app.style.left;
+        snapOverlay.style.top = app.style.top;
+        snapOverlay.style.width = app.style.width;
+        snapOverlay.style.height = app.style.height;
+        snapOverlay.style.zIndex = settings.highestZ - 1;
+    } else if (isSuggesting) {
+        const zone = snapZones.find(z => z.name === snapArea);
         snapOverlay.style.left = `${(zone.x * winWidth) + navbarWidth}px`;
         snapOverlay.style.top = `${zone.y * winHeight}px`;
         snapOverlay.style.width = `${zone.width * winWidth}px`;
         snapOverlay.style.height = `${zone.height * winHeight}px`;
-        snapOverlay.style.zIndex = settings.highestZ - 1;
     } else {
         snapOverlay.style.display = 'none';
     }

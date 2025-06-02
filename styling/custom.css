@@ -208,6 +208,20 @@ body {
   float: left;
 }
 
+.fullsize-button {
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+  color: white;
+  font-size: 18px;
+  user-select: none;
+  touch-action: none;
+  width: 24px;
+  text-align: center;
+  /* display: inline-block; */
+  float: left;
+}
+
 .title-bar {
   display: inline-block;
   position: relative;
@@ -222,7 +236,7 @@ body {
   height: 24px;
   cursor: pointer;
   color: white;
-  font-size: 12px;
+  font-size: 18px;
   user-select: none;
   touch-action: none;
   width: 24px;
