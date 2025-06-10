@@ -1,7 +1,16 @@
-let settings = {};
 const navItems = document.querySelectorAll(".nav-item");
 const appElements = document.querySelectorAll(".app-content");
 const topBars = document.querySelectorAll(".topBar");
+const snapOverlay = document.getElementById('snap-suggestion');
+const pinButton = document.querySelector('.pin');
+const carousel = document.querySelector('.carousel');
+const windowMarginY = 30;
+const windowMarginX = 50;
+const navbarWidth = 52;
+const track = document.querySelector('.carousel-track');
+const slides = Array.from(track.children);
+const nextButton = document.querySelector('.next');
+const prevButton = document.querySelector('.prev');
 let isDragging = false;
 let currentlyResizing;
 let startX, startY, startWidth, startHeight, startPosLeft;
@@ -11,11 +20,12 @@ let currentlyDragging;
 let currentlyClosing = false;
 let suggestion = '';
 let isSuggesting = false;
-const snapOverlay = document.getElementById('snap-suggestion');
-const windowMarginY = 30;
-const windowMarginX = 50;
-const navbarWidth = 52;
 let snapArea = '';
+let currentSlide = 0;
+let settings = {};
+let isAutoplay = true;
+let autoplayInterval;
+
 const snapZones = [
     { name: 'top-left', x: 0, y: 0, width: 0.5, height: 0.5 },
     { name: 'top-right', x: 0.5, y: 0, width: 0.5, height: 0.5 },
@@ -404,3 +414,45 @@ function handleSnappingZone(e, x, y) {
         snapOverlay.style.display = 'none';
     }
 }
+
+function updateSlidePosition() {
+    track.style.transform = 'translateX(-' + currentSlide * 100 + '%)';
+}
+
+function goToNextSlide() {
+    currentSlide = (currentSlide + 1) % slides.length;
+    updateSlidePosition();
+}
+
+function goToPrevSlide() {
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    updateSlidePosition();
+}
+
+function startAutoplay() {
+    autoplayInterval = setInterval(goToNextSlide, 3000);
+}
+
+function stopAutoplay() {
+    clearInterval(autoplayInterval);
+}
+
+// Button events
+nextButton.addEventListener('click', goToNextSlide);
+prevButton.addEventListener('click', goToPrevSlide);
+
+// Pause on hover
+carousel.addEventListener('mouseenter', stopAutoplay);
+carousel.addEventListener('mouseleave', () => {
+    if (isAutoplay) startAutoplay();
+});
+
+// Pin toggle
+pinButton.addEventListener('click', () => {
+    isAutoplay = !isAutoplay;
+    pinButton.innerHTML = isAutoplay ? '<i class="fa-solid fa-thumbtack-slash"></i>' : '<i class="fa-solid fa-thumbtack"></i>';
+    isAutoplay ? startAutoplay() : stopAutoplay();
+});
+
+// Start autoplay on load
+startAutoplay();

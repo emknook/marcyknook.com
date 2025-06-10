@@ -169,12 +169,19 @@ function pauseSnake() {
 }
 
 function handleKeyPress(e) {
-    if (!bGameOver | !started) {
+    if (!started) {
         switch (e.key) {
             case " ":
                 if (!started && !playing) {
                     setupSnake();
-                } else if (!playing) {
+                }
+                break;
+        }
+        drawDirection();
+    } else if (!bGameOver) {
+        switch (e.key) {
+            case " ":
+                if (!playing) {
                     snakeInterval = setInterval(gameLoop, 200); // live
                     playing = true;
                 } else {
@@ -194,7 +201,6 @@ function handleKeyPress(e) {
                 newDirection = "right";
                 break;
         }
-        drawDirection();
     }
 }
 

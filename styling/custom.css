@@ -54,13 +54,13 @@ body {
   top: 0;
   left: 0;
   background-color: rgba(170, 170, 170, 0.3);
-  border: 2px rgba(170, 170, 170, 0.5);
+  border: 2px rgba(170, 170, 170, 0.616);
   border-radius: 5px;
   pointer-events: none;
   display: none;
   transition: all 0.15s ease;
   z-index: 9999;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(3px);
 }
 
 .nav-pane {
@@ -204,7 +204,6 @@ body {
   touch-action: none;
   width: 24px;
   text-align: center;
-  /* display: inline-block; */
   float: left;
 }
 
@@ -218,7 +217,6 @@ body {
   touch-action: none;
   width: 24px;
   text-align: center;
-  /* display: inline-block; */
   float: left;
 }
 
@@ -242,6 +240,67 @@ body {
   width: 24px;
   text-align: center;
   display: inline-block;
+}
+
+.carousel {
+  position: relative;
+  width: 80%;
+  overflow: hidden;
+  margin: auto;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  padding-top: 30px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.carousel-slide iframe {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.carousel-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  background: rgba(0, 0, 0, 0);
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+
+.pin {
+  left: 50%;
+  top: 0%;
+  transform: translate(-50%, 0);
+  font-size: 1.5rem;
+}
+
+.links {
+  width: 100%;
+  display: flex;
+  padding: 0px 10px 10px 0px;
+  justify-content: center;
 }
 
 .bg-b {
