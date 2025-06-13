@@ -51,7 +51,6 @@ function snapWindowToZone(el, zoneName) {
     el.style.height = `${Math.floor(zone.height * h)}px`;
 }
 
-resetSettings();
 function resetSettings() {
     settings = {
         theme: 'dark',
