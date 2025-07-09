@@ -327,6 +327,10 @@ function openApp(targetId, forceHighest) {
             app.style.top = settings.appSettings[index].y;
             app.style.left = settings.appSettings[index].x;
             app.style.zIndex = settings.appSettings[index].z;
+            if (app.id === 'snake') {
+                const scoreText = document.getElementById('snake-score');
+                scoreText.innerText = 'Highscore: ' + settings.appSettings[index].highScore;
+            }
             if (forceHighest) {
                 setHighest(app);
             }
@@ -355,6 +359,12 @@ function closeApp(targetId) {
     }
     currentlyClosing = true;
     saveSettings();
+}
+
+function getAppSettings(targetId) {
+    if (settings) {
+        return settings.appSettings.find(e => e.name == targetId);
+    }
 }
 
 function handleSnappingZone(e, x, y) {

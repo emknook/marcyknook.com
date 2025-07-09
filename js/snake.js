@@ -138,6 +138,13 @@ function drawDirection() {
 function gameOver() {
     clearInterval(snakeInterval);
     bGameOver = true;
+    snakeSettings = getAppSettings("snake");
+    if (!snakeSettings.highScore || snakeSettings.highScore && snakeSettings.highScore < score) {
+        snakeSettings.highScore = score;
+        const scoreText = document.getElementById('snake-score');
+        scoreText.innerText = 'Highscore: ' + settings.appSettings[index].highScore;
+    }
+    saveSettings();
 }
 
 function moveSnake() {
@@ -177,7 +184,6 @@ function handleKeyPress(e) {
                 }
                 break;
         }
-        drawDirection();
     } else if (!bGameOver) {
         switch (e.key) {
             case " ":
@@ -201,6 +207,9 @@ function handleKeyPress(e) {
                 newDirection = "right";
                 break;
         }
+    }
+    if (started) {
+        drawDirection();
     }
 }
 
