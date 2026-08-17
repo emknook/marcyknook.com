@@ -11,6 +11,7 @@ const track = document.querySelector('.carousel-track');
 const slides = Array.from(track.children);
 const nextButton = document.querySelector('.next');
 const prevButton = document.querySelector('.prev');
+let borderSize = 4;
 let isDragging = false;
 let currentlyResizing;
 let startX, startY, startWidth, startHeight, startPosLeft;
@@ -47,8 +48,8 @@ function snapWindowToZone(el, zoneName) {
     el.style.position = 'absolute';
     el.style.left = `${Math.floor(zone.x * w) + navbarWidth}px`;
     el.style.top = `${Math.floor(zone.y * h)}px`;
-    el.style.width = `${Math.floor(zone.width * w)}px`;
-    el.style.height = `${Math.floor(zone.height * h)}px`;
+    el.style.width = `${Math.floor(zone.width * w) - borderSize}px`;
+    el.style.height = `${Math.floor(zone.height * h) - borderSize}px`;
 }
 
 function resetSettings() {
@@ -445,6 +446,14 @@ function startAutoplay() {
 function stopAutoplay() {
     clearInterval(autoplayInterval);
 }
+
+function resizeHandler() {
+    snapZones.forEach(zone => {
+
+    });
+}
+
+document.addEventListener('resize', resizeHandler);
 
 // Button events
 nextButton.addEventListener('click', goToNextSlide);
