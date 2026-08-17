@@ -1,235 +1,553 @@
+const fieldSize = 10;
+const gameSpeed = 200;
+
+const correctionWindow = 80;
+const maxQueueLength = 3;
+
+const snakeContainer = document
+    .getElementById("snake")
+    .querySelector('[id="content"]');
+
+const canvasElement = document.createElement("canvas");
+const canvas = canvasElement.getContext("2d");
+
+snakeContainer.append(canvasElement);
+
 let tileSize = 20;
-let fieldSize = 10;
-let snakeContainer = document.getElementById("snake").querySelector('[id="content"]');
-let field = document.createElement("canvas");
-snakeContainer.append(field);
-let canvasSize = tileSize * fieldSize;
-const cnvsCtx = field.getContext("2d");
-// let scoreDiv = document.getElementById('score');
-//setup snake, array of "blocks"/"tiles" with x and y (the more blocks, the longer the snake)
-let snake = [{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) - 1 },
-{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) },
-{ x: Math.floor(fieldSize / 2), y: Math.floor(fieldSize / 2) + 1 }];
-let dirX = 0; // -1 = left 1 = right
-let dirY = 1; // -1 = up 1 = down
-let started = false;
-let playing = false;
+
+let snake = [
+    {
+        x: Math.floor(fieldSize / 2),
+        y: Math.floor(fieldSize / 2) - 1
+    },
+    {
+        x: Math.floor(fieldSize / 2),
+        y: Math.floor(fieldSize / 2)
+    },
+    {
+        x: Math.floor(fieldSize / 2),
+        y: Math.floor(fieldSize / 2) + 1
+    }
+];
+
+const directions = {
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 }
+};
+
+let currentDirection = "down";
+let directionQueue = [];
+let lastDirectionInputTime = 0;
+
+let gameState = "ready";
+let snakeInterval = null;
+
 let score = 0;
 let berries = [];
-let bGameOver = false;
-let newDirection = "";
-let oldDirection = "down";
-cnvsCtx.font = '20px Arial';
-cnvsCtx.fillStyle = 'white';
-cnvsCtx.textBaseline = 'top';
-cnvsCtx.fillText('Press space to start!', 0, 0);
-function addBerries(min, max) {
-    //add at least min amount of berries, plus max
-    for (var i = 0; (i < Math.floor(Math.random() * max) + min) && i < max; i++) {
-        var posX = Math.floor(Math.random() * fieldSize);
-        var posY = Math.floor(Math.random() * fieldSize);
-        if (!snake.find(e => e.x == posX && e.y == posY)) {
-            berries.push({ x: posX, y: posY });
-        } else {
-            addBerries(1, 1);
-        }
+
+
+/*
+ * SETUP
+ */
+
+function setupSnake() {
+    addBerries(3, 4);
+
+    gameState = "playing";
+    snakeInterval = setInterval(gameLoop, gameSpeed);
+
+    drawGame();
+}
+
+function gameLoop() {
+    moveSnake();
+
+    if (gameState !== "gameover") {
+        drawGame();
     }
 }
 
-function setupSnake() {
-    determineSize();
-    addBerries(3, 4);//add at least 3 for first level
-    document.addEventListener("keydown", handleKeyPress); // "live"
-    snakeInterval = setInterval(gameLoop, 200); // live
-    started = true;
-    playing = true;
-}
 
-//do loop
-function gameLoop() {
-    //functions
-    moveSnake();
-    //determine size of field
-    determineSize();
-    //draw
-    cnvsCtx.clearRect(0, 0, fieldSize, fieldSize);
-    drawBerries();
-    drawSnake();
-    drawScore();
-    drawDirection();
-}
+/*
+ * SIZING
+ */
 
 function determineSize() {
-    var width = snakeContainer.getBoundingClientRect().width;
-    var height = snakeContainer.getBoundingClientRect().height;
-    var size = height > width ? width : height;
+    const { width, height } = snakeContainer.getBoundingClientRect();
+    const size = Math.min(width, height);
+
     tileSize = size / fieldSize;
-    field.style.width = size + 'px';
-    field.style.height = size + 'px';
-    field.width = size;
-    field.height = size;
+
+    canvasElement.style.width = `${size}px`;
+    canvasElement.style.height = `${size}px`;
+
+    canvasElement.width = size;
+    canvasElement.height = size;
+
+    drawGame();
 }
 
-function handleCollision() {
-    //move Out of Screen
-    var head = snake[snake.length - 1];
-    if (head.x > fieldSize - 1 || head.y > fieldSize - 1 || head.x < 0 || head.y < 0) {
+const resizeObserver = new ResizeObserver(determineSize);
+resizeObserver.observe(snakeContainer);
+
+
+/*
+ * BERRIES
+ */
+
+function addBerries(min, max) {
+    const requestedAmount =
+        Math.floor(Math.random() * (max - min + 1)) + min;
+
+    const availableTiles = [];
+
+    for (let y = 0; y < fieldSize; y++) {
+        for (let x = 0; x < fieldSize; x++) {
+            const occupiedBySnake = snake.some(
+                segment => segment.x === x && segment.y === y
+            );
+
+            const occupiedByBerry = berries.some(
+                berry => berry.x === x && berry.y === y
+            );
+
+            if (!occupiedBySnake && !occupiedByBerry) {
+                availableTiles.push({ x, y });
+            }
+        }
+    }
+
+    const amount = Math.min(requestedAmount, availableTiles.length);
+
+    for (let i = 0; i < amount; i++) {
+        const randomIndex = Math.floor(
+            Math.random() * availableTiles.length
+        );
+
+        const berry = availableTiles.splice(randomIndex, 1)[0];
+
+        berries.push(berry);
+    }
+}
+
+
+/*
+ * MOVEMENT
+ */
+
+function moveSnake() {
+    determineDirection();
+
+    const oldHead = snake[snake.length - 1];
+    const movement = directions[currentDirection];
+
+    const newHead = {
+        x: oldHead.x + movement.x,
+        y: oldHead.y + movement.y
+    };
+
+    const berryIndex = berries.findIndex(
+        berry =>
+            berry.x === newHead.x &&
+            berry.y === newHead.y
+    );
+
+    const ateBerry = berryIndex !== -1;
+
+    if (
+        isOutsideField(newHead) ||
+        wouldHitSnake(newHead, ateBerry)
+    ) {
         gameOver();
         return;
     }
 
-    //snake collision
-    for (var i = snake.length - 2; i >= 0; i--) {
-        let body = snake[i];
-        if (head.x == body.x && head.y == body.y) {
-            gameOver();
-            return;
-        }
-    }
-
-    //berry collision
-    var berryToRemove = -1;
-    for (var i = 0; i < berries.length; i++) {
-        var berry = berries[i];
-        if (head.x == berry.x && head.y == berry.y) {
-            score++;
-            berryToRemove = i;
-            break;
-        }
-    }
-
-    if (berryToRemove != -1) {
-        berries.splice(berryToRemove, 1);
-        return true;
-    }
-
-    if (berries.length == 0) {
-        addBerries(1, 4);//add at least 1
-    }
-    return false;
-}
-
-function drawSnake() {
-    cnvsCtx.fillStyle = "lime";
-    snake.forEach(e => cnvsCtx.fillRect(e.x * tileSize, e.y * tileSize, tileSize, tileSize));
-    cnvsCtx.strokeStyle = "black";
-    snake.forEach(e => cnvsCtx.strokeRect(e.x * tileSize + 1, e.y * tileSize + 1, tileSize - 2, tileSize - 2));
-}
-
-function drawBerries() {
-    cnvsCtx.fillStyle = "red";
-    berries.forEach(e => cnvsCtx.fillRect(e.x * tileSize, e.y * tileSize, tileSize, tileSize));
-}
-
-function drawScore() {
-    cnvsCtx.font = '20px Arial';
-    cnvsCtx.fillStyle = 'white';
-    cnvsCtx.textBaseline = 'top';
-    cnvsCtx.fillText('Score:' + score, 0, 0);
-}
-
-function drawDirection() {
-    cnvsCtx.font = '20px Arial';
-    cnvsCtx.fillStyle = 'white';
-    cnvsCtx.textBaseline = 'top';
-    cnvsCtx.fillText('Direction: ' + newDirection, 0, 30);
-}
-
-function gameOver() {
-    clearInterval(snakeInterval);
-    bGameOver = true;
-    snakeSettings = getAppSettings("snake");
-    if (!snakeSettings.highScore || snakeSettings.highScore && snakeSettings.highScore < score) {
-        snakeSettings.highScore = score;
-        const scoreText = document.getElementById('snake-score');
-        scoreText.innerText = 'Highscore: ' + score;
-    }
-    saveSettings();
-}
-
-function moveSnake() {
-    //only determine now, so as not to switch direction and accidentally go into itself
-    determineDirection();
-    //add block to head, in direction
-    //head = last element, add to head = push
-    //tail = first element, remove tail = shift
-    var oldHead = snake[snake.length - 1];
-    var newHead = { x: oldHead.x, y: oldHead.y };
-    newHead.x += dirX;
-    newHead.y += dirY;
     snake.push(newHead);
-    //remove tail, after adding head, if no berry eaten?:
-    ateBerry = handleCollision();
-    if (!ateBerry) {
+
+    if (ateBerry) {
+        berries.splice(berryIndex, 1);
+        score++;
+
+        if (berries.length === 0) {
+            addBerries(2, 5);
+        }
+    } else {
         snake.shift();
     }
 }
 
-function moveByKeyPress(e) { //testing
-    handleKeyPress(e);
-    gameLoop();
+function isOutsideField(position) {
+    return (
+        position.x < 0 ||
+        position.y < 0 ||
+        position.x >= fieldSize ||
+        position.y >= fieldSize
+    );
 }
 
-function pauseSnake() {
-    clearInterval(snakeInterval);
-    playing = false;
+function wouldHitSnake(newHead, isGrowing) {
+    /*
+     * If the snake is not eating, its tail moves away during
+     * this tick. That means moving into the current tail tile
+     * is legal.
+     */
+    const bodyToCheck = isGrowing
+        ? snake
+        : snake.slice(1);
+
+    return bodyToCheck.some(
+        segment =>
+            segment.x === newHead.x &&
+            segment.y === newHead.y
+    );
 }
 
-function handleKeyPress(e) {
-    if (!started) {
-        switch (e.key) {
-            case " ":
-                if (!started && !playing) {
-                    setupSnake();
-                }
-                break;
-        }
-    } else if (!bGameOver) {
-        switch (e.key) {
-            case " ":
-                if (!playing) {
-                    snakeInterval = setInterval(gameLoop, 200); // live
-                    playing = true;
-                } else {
-                    pauseSnake();
-                }
-                break;
-            case "ArrowUp":
-                newDirection = "up";
-                break;
-            case "ArrowDown":
-                newDirection = "down";
-                break;
-            case "ArrowLeft":
-                newDirection = "left";
-                break;
-            case "ArrowRight":
-                newDirection = "right";
-                break;
-        }
+
+/*
+ * DIRECTION QUEUE
+ */
+
+function queueDirection(direction) {
+    const now = performance.now();
+
+    const shouldReplace =
+        directionQueue.length > 0 &&
+        now - lastDirectionInputTime < correctionWindow;
+
+    if (shouldReplace) {
+        replaceLastDirection(direction);
+    } else {
+        addDirection(direction);
     }
-    if (started) {
-        drawDirection();
+
+    lastDirectionInputTime = now;
+}
+
+function replaceLastDirection(direction) {
+    const previousDirection =
+        directionQueue.length >= 2
+            ? directionQueue[directionQueue.length - 2]
+            : currentDirection;
+
+    /*
+     * Example:
+     *
+     * Currently moving down
+     * Queue: [right]
+     *
+     * Player quickly presses down.
+     *
+     * That means they corrected themselves and don't
+     * want to turn at all, so remove "right".
+     */
+    if (direction === previousDirection) {
+        directionQueue.pop();
+        return;
     }
+
+    if (isOppositeDirection(direction, previousDirection)) {
+        return;
+    }
+
+    directionQueue[directionQueue.length - 1] = direction;
+}
+
+function addDirection(direction) {
+    const previousDirection =
+        directionQueue.length > 0
+            ? directionQueue[directionQueue.length - 1]
+            : currentDirection;
+
+    if (
+        direction === previousDirection ||
+        isOppositeDirection(direction, previousDirection)
+    ) {
+        return;
+    }
+
+    if (directionQueue.length < maxQueueLength) {
+        directionQueue.push(direction);
+        return;
+    }
+
+    /*
+     * Don't remove the oldest command.
+     *
+     * Doing that could turn a valid sequence such as:
+     *
+     * down -> right -> up -> left
+     *
+     * into:
+     *
+     * down -> up -> left
+     *
+     * which would cause an illegal reversal.
+     *
+     * Instead, replace the newest queued command.
+     */
+    const directionBeforeLast =
+        directionQueue[directionQueue.length - 2];
+
+    if (direction === directionBeforeLast) {
+        directionQueue.pop();
+        return;
+    }
+
+    if (isOppositeDirection(direction, directionBeforeLast)) {
+        return;
+    }
+
+    directionQueue[directionQueue.length - 1] = direction;
 }
 
 function determineDirection() {
-    switch (newDirection) {
-        //new = opposite of old, do nothing
-        case "up":
-            if (dirY != 1) { dirY = -1; dirX = 0; oldDirection = newDirection }
+    if (directionQueue.length === 0) {
+        return;
+    }
+
+    currentDirection = directionQueue.shift();
+}
+
+function isOppositeDirection(a, b) {
+    return (
+        (a === "up" && b === "down") ||
+        (a === "down" && b === "up") ||
+        (a === "left" && b === "right") ||
+        (a === "right" && b === "left")
+    );
+}
+
+
+/*
+ * INPUT
+ */
+
+function handleKeyPress(event) {
+    const key = event.key.toLowerCase();
+
+    const gameKeys = [
+        " ",
+        "arrowup",
+        "arrowdown",
+        "arrowleft",
+        "arrowright",
+        "w",
+        "a",
+        "s",
+        "d"
+    ];
+
+    if (gameKeys.includes(key)) {
+        event.preventDefault();
+    }
+
+    if (gameState === "ready") {
+        if (key === " ") {
+            setupSnake();
+        }
+
+        return;
+    }
+
+    if (gameState === "gameover") {
+        return;
+    }
+
+    if (key === " ") {
+        if (gameState === "playing") {
+            pauseSnake();
+        } else if (gameState === "paused") {
+            resumeSnake();
+        }
+
+        return;
+    }
+
+    switch (key) {
+        case "arrowup":
+        case "w":
+            queueDirection("up");
             break;
-        case "down":
-            if (dirY != -1) { dirY = 1; dirX = 0; oldDirection = newDirection }
+
+        case "arrowdown":
+        case "s":
+            queueDirection("down");
             break;
-        case "left":
-            if (dirX != 1) { dirY = 0; dirX = -1; oldDirection = newDirection }
+
+        case "arrowleft":
+        case "a":
+            queueDirection("left");
             break;
-        case "right":
-            if (dirX != -1) { dirY = 0; dirX = 1; oldDirection = newDirection }
+
+        case "arrowright":
+        case "d":
+            queueDirection("right");
             break;
     }
+
+    drawGame();
 }
 
 document.addEventListener("keydown", handleKeyPress);
-let snakeInterval = null;
+
+
+/*
+ * PAUSE / GAME OVER
+ */
+
+function pauseSnake() {
+    clearInterval(snakeInterval);
+    snakeInterval = null;
+
+    gameState = "paused";
+
+    drawGame();
+}
+
+function resumeSnake() {
+    snakeInterval = setInterval(gameLoop, gameSpeed);
+    gameState = "playing";
+
+    drawGame();
+}
+
+function gameOver() {
+    clearInterval(snakeInterval);
+    snakeInterval = null;
+
+    gameState = "gameover";
+
+    const snakeSettings = getAppSettings("snake");
+
+    if (
+        !snakeSettings.highScore ||
+        snakeSettings.highScore < score
+    ) {
+        snakeSettings.highScore = score;
+
+        const scoreText = document.getElementById("snake-score");
+        scoreText.innerText = `Highscore: ${score}`;
+    }
+
+    saveSettings();
+
+    drawGame();
+}
+
+
+/*
+ * DRAWING
+ */
+
+function drawGame() {
+    canvas.clearRect(
+        0,
+        0,
+        canvasElement.width,
+        canvasElement.height
+    );
+
+    if (gameState === "ready") {
+        drawMessage("Press space to start!");
+        return;
+    }
+
+    drawBerries();
+    drawSnake();
+    drawScore();
+    drawDirection();
+
+    if (gameState === "paused") {
+        drawMessage("Paused");
+    }
+
+    if (gameState === "gameover") {
+        drawMessage("Game over!");
+    }
+}
+
+function drawSnake() {
+    canvas.fillStyle = "lime";
+
+    snake.forEach(segment => {
+        canvas.fillRect(
+            segment.x * tileSize,
+            segment.y * tileSize,
+            tileSize,
+            tileSize
+        );
+    });
+
+    canvas.strokeStyle = "black";
+
+    snake.forEach(segment => {
+        canvas.strokeRect(
+            segment.x * tileSize + 1,
+            segment.y * tileSize + 1,
+            tileSize - 2,
+            tileSize - 2
+        );
+    });
+}
+
+function drawBerries() {
+    canvas.fillStyle = "red";
+
+    berries.forEach(berry => {
+        canvas.fillRect(
+            berry.x * tileSize,
+            berry.y * tileSize,
+            tileSize,
+            tileSize
+        );
+    });
+}
+
+function drawScore() {
+    canvas.font = "20px Arial";
+    canvas.fillStyle = "white";
+    canvas.textBaseline = "top";
+
+    canvas.fillText(`Score: ${score}`, 0, 0);
+}
+
+function drawDirection() {
+    canvas.font = "20px Arial";
+    canvas.fillStyle = "white";
+    canvas.textBaseline = "top";
+
+    const queue =
+        directionQueue.length > 0
+            ? directionQueue.join(", ")
+            : "-";
+
+    canvas.fillText(
+        `Direction: ${currentDirection} [${queue}]`,
+        0,
+        30
+    );
+}
+
+function drawMessage(message) {
+    canvas.font = "20px Arial";
+    canvas.fillStyle = "white";
+    canvas.textBaseline = "middle";
+    canvas.textAlign = "center";
+
+    canvas.fillText(
+        message,
+        canvasElement.width / 2,
+        canvasElement.height / 2
+    );
+
+    canvas.textAlign = "start";
+}
+
+
+/*
+ * INITIAL DRAW
+ */
+
+determineSize();
