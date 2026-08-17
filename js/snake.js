@@ -142,7 +142,7 @@ function gameOver() {
     if (!snakeSettings.highScore || snakeSettings.highScore && snakeSettings.highScore < score) {
         snakeSettings.highScore = score;
         const scoreText = document.getElementById('snake-score');
-        scoreText.innerText = 'Highscore: ' + settings.appSettings[index].highScore;
+        scoreText.innerText = 'Highscore: ' + score;
     }
     saveSettings();
 }
