@@ -81,6 +81,7 @@ body {
 
 .snake canvas {
   border: var(--border-size) solid green;
+  touch-action: none;
 }
 
 .nav-item {
