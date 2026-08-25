@@ -1,31 +1,39 @@
-const navItems = document.querySelectorAll(".nav-item");
-const appElements = document.querySelectorAll(".app-content");
-const topBars = document.querySelectorAll(".topBar");
-const snapOverlay = document.getElementById('snap-suggestion');
-const pinButton = document.querySelector('.pin');
-const carousel = document.querySelector('.carousel');
+const STORAGE_KEY = 'marcyDesktopSettings';
+const LEGACY_STORAGE_KEY = 'userSettings';
+const SETTINGS_VERSION = 2;
+
 const windowMarginY = 30;
 const windowMarginX = 50;
 const navbarWidth = 52;
-const track = document.querySelector('.carousel-track');
-const slides = Array.from(track.children);
-const nextButton = document.querySelector('.next');
-const prevButton = document.querySelector('.prev');
-let borderSize = 4;
-let isDragging = false;
+const borderSize = 4;
+
+let appDefinitions = [];
+let settings;
+let navItems = [];
+let appElements = [];
+let topBars = [];
+let snapOverlay;
+
 let currentlyResizing;
-let startX, startY, startWidth, startHeight, startPosLeft;
-let handleMouseMoveDrag, handleTouchMoveDrag, handleMouseMoveResize, handleTouchMoveResize, handleTouchSnappingZone, handleMouseSnappingZone;
-let offsetX, offsetY;
 let currentlyDragging;
 let currentlyClosing = false;
-let suggestion = '';
+let isDragging = false;
 let isSuggesting = false;
 let snapArea = '';
-let currentSlide = 0;
-let settings = {};
-let isAutoplay = true;
-let autoplayInterval;
+let startX;
+let startY;
+let startWidth;
+let startHeight;
+let startPosLeft;
+let startPosTop;
+let offsetX;
+let offsetY;
+let handleMouseMoveDrag;
+let handleTouchMoveDrag;
+let handleMouseMoveResize;
+let handleTouchMoveResize;
+let handleTouchSnappingZone;
+let handleMouseSnappingZone;
 
 const snapZones = [
     { name: 'top-left', x: 0, y: 0, width: 0.5, height: 0.5 },
@@ -36,63 +44,408 @@ const snapZones = [
     { name: 'right-half', x: 0.5, y: 0, width: 0.5, height: 1 },
     { name: 'top-half', x: 0, y: 0, width: 1, height: 0.5 },
     { name: 'bottom-half', x: 0, y: 0.5, width: 1, height: 0.5 },
-    { name: 'full', x: 0, y: 0, width: 1, height: 1 }
+    { name: 'full', x: 0, y: 0, width: 1, height: 1 },
 ];
 
-function snapWindowToZone(el, zoneName) {
-    const zone = snapZones.find(z => z.name === zoneName);
-    const windowElRect = el.parentElement.getBoundingClientRect();
-    const w = windowElRect.width;
-    const h = windowElRect.height;
+const settingsMigrations = {
+    1: oldSettings => ({
+        version: 2,
+        theme: oldSettings.theme ?? 'dark',
+        fontSize: oldSettings.fontSize ?? 'large',
+        openApps: oldSettings.openApps ?? [],
+        windows: Object.fromEntries(
+            (oldSettings.appSettings ?? []).map(app => [
+                app.name,
+                {
+                    x: app.x,
+                    y: app.y,
+                    width: app.width,
+                    height: app.height,
+                    z: app.z,
+                    highScore: app.highScore,
+                },
+            ]),
+        ),
+        highestZ: Number(oldSettings.highestZ) || 1,
+    }),
+};
 
-    el.style.position = 'absolute';
-    el.style.left = `${Math.floor(zone.x * w) + navbarWidth}px`;
-    el.style.top = `${Math.floor(zone.y * h)}px`;
-    el.style.width = `${Math.floor(zone.width * w) - borderSize}px`;
-    el.style.height = `${Math.floor(zone.height * h) - borderSize}px`;
+async function initialiseDesktop() {
+    try {
+        const response = await fetch('data/apps.json');
+        if (!response.ok) {
+            throw new Error(`Could not load apps.json: ${response.status}`);
+        }
+
+        const appData = await response.json();
+        appDefinitions = appData.apps;
+        renderDesktop();
+        loadSettings();
+        bindDesktopEvents();
+        initialiseCarousel();
+
+        // snake.js expects its container to exist, so load it only after rendering the JSON.
+        await import('./snake.js');
+    } catch (error) {
+        console.error(error);
+        document.getElementById('window').innerHTML =
+            '<p class="load-error">The desktop could not be loaded. Please refresh the page.</p>';
+    }
+}
+
+function renderDesktop() {
+    const nav = document.getElementById('nav-pane');
+    const desktop = document.getElementById('window');
+
+    for (const app of appDefinitions) {
+        nav.insertAdjacentHTML(
+            'beforeend',
+            `<button class="nav-item ${app.color}" type="button" data-target="${app.id}">
+                <span class="label">${app.navLabel}</span>
+                <span class="icon" aria-hidden="true">${app.icon}</span>
+            </button>`,
+        );
+
+        const windowElement = document.createElement('section');
+        windowElement.className = `app-content resizable ${app.color}`;
+        windowElement.id = app.id;
+        windowElement.innerHTML = `
+            <div class="topBar bg-${app.color}">
+                <div class="resize-button" aria-label="Resize">↖</div>
+                <div class="fullsize-button" aria-label="Maximise">▢</div>
+                <div class="title-bar">${app.title}</div>
+                <div class="close-button" aria-label="Close">X</div>
+            </div>
+            <div class="${app.contentClass ?? 'scrollwrapper'}" data-app-content></div>
+        `;
+
+        // apps.json is a trusted, shipped content source. Sanitize here first if it ever
+        // becomes editable by untrusted users.
+        windowElement.querySelector('[data-app-content]').innerHTML = app.content.html;
+        desktop.insertBefore(windowElement, document.getElementById('snap-suggestion'));
+    }
+
+    navItems = Array.from(document.querySelectorAll('.nav-item'));
+    appElements = Array.from(document.querySelectorAll('.app-content'));
+    topBars = Array.from(document.querySelectorAll('.topBar'));
+    snapOverlay = document.getElementById('snap-suggestion');
+}
+
+function createDefaultSettings() {
+    return {
+        version: SETTINGS_VERSION,
+        theme: 'dark',
+        fontSize: 'large',
+        openApps: appDefinitions.filter(app => app.defaultOpen).map(app => app.id),
+        windows: Object.fromEntries(
+            appDefinitions.map(app => [
+                app.id,
+                {
+                    ...app.defaultWindow,
+                    z: app.defaultOpen ? 1 : 0,
+                    ...(app.id === 'snake' ? { highScore: 0 } : {}),
+                },
+            ]),
+        ),
+        highestZ: 1,
+    };
+}
+
+function readStoredSettings() {
+    const storedValue =
+        localStorage.getItem(STORAGE_KEY) ??
+        localStorage.getItem(LEGACY_STORAGE_KEY);
+
+    if (!storedValue) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(storedValue);
+    } catch {
+        return null;
+    }
+}
+
+function migrateSettings(storedSettings) {
+    if (!storedSettings) {
+        return null;
+    }
+
+    let migrated = storedSettings.version
+        ? { ...storedSettings }
+        : { ...storedSettings, version: 1 };
+
+    if (migrated.version > SETTINGS_VERSION) {
+        return null;
+    }
+
+    while (migrated.version < SETTINGS_VERSION) {
+        const migrate = settingsMigrations[migrated.version];
+        if (!migrate) {
+            return null;
+        }
+        migrated = migrate(migrated);
+    }
+
+    return migrated;
+}
+
+function mergeSettingsWithDefaults(storedSettings) {
+    const defaults = createDefaultSettings();
+    const validIds = new Set(appDefinitions.map(app => app.id));
+
+    if (!storedSettings) {
+        return defaults;
+    }
+
+    return {
+        ...defaults,
+        ...storedSettings,
+        version: SETTINGS_VERSION,
+        openApps: (storedSettings.openApps ?? defaults.openApps).filter(id =>
+            validIds.has(id),
+        ),
+        windows: Object.fromEntries(
+            appDefinitions.map(app => [
+                app.id,
+                {
+                    ...defaults.windows[app.id],
+                    ...(storedSettings.windows?.[app.id] ?? {}),
+                },
+            ]),
+        ),
+        highestZ: Number(storedSettings.highestZ) || defaults.highestZ,
+    };
+}
+
+function loadSettings() {
+    settings = mergeSettingsWithDefaults(migrateSettings(readStoredSettings()));
+    saveSettings();
+
+    for (const appId of settings.openApps) {
+        openApp(appId, false, false);
+    }
+
+    fillSettingBlocks();
 }
 
 function resetSettings() {
-    settings = {
-        theme: 'dark',
-        fontSize: 'large',
-        openApps: ['app0'],
-        appSettings: [],
-        highestZ: "1"
-    };
-    appElements.forEach(app => {
-        closeApp(app.id)
-    });
+    settings = createDefaultSettings();
+
+    for (const app of appElements) {
+        app.classList.remove('show');
+        applyWindowSettings(app);
+    }
+
+    for (const appId of settings.openApps) {
+        openApp(appId, false, false);
+    }
+
     saveSettings();
-    openApp('app0', false);
+}
+
+function saveSettings() {
+    settings.version = SETTINGS_VERSION;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    fillSettingBlocks();
+}
+
+function bindDesktopEvents() {
+    for (const app of appElements) {
+        app.addEventListener('mousedown', () => setHighest(app));
+    }
+
+    for (const button of document.querySelectorAll('.resize-button')) {
+        button.addEventListener('mousedown', event => {
+            event.preventDefault();
+            startResize(button.closest('.app-content'), event.clientX, event.clientY);
+        });
+        button.addEventListener('touchstart', event => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            startResize(button.closest('.app-content'), touch.clientX, touch.clientY);
+        });
+    }
+
+    for (const button of document.querySelectorAll('.fullsize-button')) {
+        button.addEventListener('click', () => {
+            const app = button.closest('.app-content');
+            snapWindowToZone(app, 'full');
+            updateWindowSettings(app);
+            saveSettings();
+        });
+    }
+
+    for (const button of document.querySelectorAll('.close-button')) {
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            closeApp(button.closest('.app-content').id);
+        });
+    }
+
+    for (const item of navItems) {
+        item.addEventListener('click', () => openApp(item.dataset.target, true));
+    }
+
+    for (const topBar of topBars) {
+        topBar.addEventListener('mousedown', event => {
+            if (!event.target.closest('.resize-button, .fullsize-button, .close-button')) {
+                startDrag(topBar, event.clientX, event.clientY);
+            }
+        });
+        topBar.addEventListener('touchstart', event => {
+            if (!event.target.closest('.resize-button, .fullsize-button, .close-button')) {
+                const touch = event.touches[0];
+                startDrag(topBar, touch.clientX, touch.clientY);
+            }
+        });
+    }
+
+    document
+        .querySelector('[data-action="reset-settings"]')
+        ?.addEventListener('click', resetSettings);
+}
+
+function applyWindowSettings(app) {
+    const appSettings = settings.windows[app.id];
+    app.style.left = appSettings.x;
+    app.style.top = appSettings.y;
+    app.style.width = appSettings.width;
+    app.style.height = appSettings.height;
+    app.style.zIndex = appSettings.z ?? 0;
+}
+
+function updateWindowSettings(app) {
+    settings.windows[app.id] = {
+        ...settings.windows[app.id],
+        x: app.style.left,
+        y: app.style.top,
+        width: app.style.width,
+        height: app.style.height,
+        z: Number(app.style.zIndex) || 0,
+    };
+}
+
+function openApp(targetId, forceHighest = true, persist = true) {
+    const app = document.getElementById(targetId);
+    if (!app || !settings.windows[targetId]) {
+        return;
+    }
+
+    currentlyClosing = false;
+    if (!settings.openApps.includes(targetId)) {
+        settings.openApps.push(targetId);
+    }
+
+    applyWindowSettings(app);
+    app.classList.add('show');
+
+    if (targetId === 'snake') {
+        document.getElementById('snake-score').innerText =
+            `Highscore: ${settings.windows.snake.highScore ?? 0}`;
+    }
+
+    if (forceHighest) {
+        setHighest(app);
+    } else if (persist) {
+        saveSettings();
+    }
+}
+
+function closeApp(targetId) {
+    const app = document.getElementById(targetId);
+    if (!app) {
+        return;
+    }
+
+    app.classList.remove('show');
+    app.style.zIndex = '0';
+    settings.windows[targetId].z = 0;
+    settings.openApps = settings.openApps.filter(id => id !== targetId);
+
+    document
+        .querySelector(`[data-target="${targetId}"]`)
+        ?.classList.remove('active');
+
+    currentlyClosing = true;
+    saveSettings();
 }
 
 function setHighest(app) {
-    if (settings.highestZ + "" === app.style.zIndex) return;
-    settings.highestZ++;
+    if (String(settings.highestZ) === app.style.zIndex) {
+        return;
+    }
+
+    settings.highestZ += 1;
     app.style.zIndex = settings.highestZ;
+
     if (!currentlyClosing) {
-        navItems.forEach(navItem => {
-            navItem.dataset.target === app.id ? navItem.classList.add("active") : navItem.classList.remove("active");
-        });
+        for (const navItem of navItems) {
+            navItem.classList.toggle('active', navItem.dataset.target === app.id);
+        }
     } else {
         currentlyClosing = false;
     }
-    updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
+
+    updateWindowSettings(app);
     saveSettings();
+}
+
+function getAppSettings(targetId) {
+    return settings?.windows[targetId];
+}
+
+function fillSettingBlocks() {
+    const settingContent = document.querySelector('#appSettings');
+    if (!settingContent || !settings) {
+        return;
+    }
+
+    settingContent.innerHTML = '';
+    for (const app of appDefinitions) {
+        const windowSettings = settings.windows[app.id];
+        const appInfoBlock = document.createElement('div');
+        appInfoBlock.classList.add('settingsBlock');
+        appInfoBlock.innerText = [
+            app.title,
+            `Width: ${windowSettings.width}`,
+            `Height: ${windowSettings.height}`,
+            `X: ${windowSettings.x}`,
+            `Y: ${windowSettings.y}`,
+            `Z: ${windowSettings.z}`,
+        ].join('\n');
+        settingContent.appendChild(appInfoBlock);
+    }
+}
+
+function snapWindowToZone(app, zoneName) {
+    const zone = snapZones.find(item => item.name === zoneName);
+    const desktopRect = app.parentElement.getBoundingClientRect();
+    const width = desktopRect.width;
+    const height = desktopRect.height;
+
+    app.style.position = 'absolute';
+    app.style.left = `${Math.floor(zone.x * width) + navbarWidth}px`;
+    app.style.top = `${Math.floor(zone.y * height)}px`;
+    app.style.width = `${Math.floor(zone.width * width) - borderSize}px`;
+    app.style.height = `${Math.floor(zone.height * height) - borderSize}px`;
 }
 
 function startResize(app, x, y) {
     currentlyResizing = app;
     startX = x;
     startY = y;
-    startWidth = parseInt(document.defaultView.getComputedStyle(currentlyResizing).width, 10);
-    startHeight = parseInt(document.defaultView.getComputedStyle(currentlyResizing).height, 10);
-    startPosLeft = parseInt(document.defaultView.getComputedStyle(currentlyResizing).left, 10);
-    startPosTop = parseInt(document.defaultView.getComputedStyle(currentlyResizing).top, 10);
-    handleMouseMoveResize = (e) => onResize(e.clientX, e.clientY);
-    handleTouchMoveResize = (e) => {
-        const touch = e.touches[0];
+    const style = document.defaultView.getComputedStyle(app);
+    startWidth = Number.parseInt(style.width, 10);
+    startHeight = Number.parseInt(style.height, 10);
+    startPosLeft = Number.parseInt(style.left, 10);
+    startPosTop = Number.parseInt(style.top, 10);
+
+    handleMouseMoveResize = event => onResize(event.clientX, event.clientY);
+    handleTouchMoveResize = event => {
+        const touch = event.touches[0];
         onResize(touch.clientX, touch.clientY);
     };
 
@@ -103,374 +456,187 @@ function startResize(app, x, y) {
 }
 
 function onResize(x, y) {
-    if (currentlyResizing) {
-        offsetX = x - startX;
-        offsetY = y - startY;
-        let newWidth = startWidth - offsetX;
-        let newHeight = startHeight - offsetY;
-        let newTop = startPosTop + offsetY;
-        let newLeft = startPosLeft + offsetX;
-        currentlyResizing.style.left = newLeft + 'px';
-        currentlyResizing.style.width = newWidth + 'px';
-        currentlyResizing.style.height = newHeight + 'px';
-        currentlyResizing.style.top = newTop + 'px';
+    if (!currentlyResizing) {
+        return;
     }
+
+    offsetX = x - startX;
+    offsetY = y - startY;
+    currentlyResizing.style.left = `${startPosLeft + offsetX}px`;
+    currentlyResizing.style.top = `${startPosTop + offsetY}px`;
+    currentlyResizing.style.width = `${startWidth - offsetX}px`;
+    currentlyResizing.style.height = `${startHeight - offsetY}px`;
 }
 
 function stopResize() {
-    let app = currentlyResizing;
-    if (app) {
-        document.removeEventListener('mousemove', handleMouseMoveResize);
-        document.removeEventListener('mouseup', stopResize);
-        document.removeEventListener('touchmove', handleTouchMoveResize);
-        document.removeEventListener('touchend', stopResize);
-        updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
+    if (currentlyResizing) {
+        updateWindowSettings(currentlyResizing);
         saveSettings();
     }
+
+    document.removeEventListener('mousemove', handleMouseMoveResize);
+    document.removeEventListener('mouseup', stopResize);
+    document.removeEventListener('touchmove', handleTouchMoveResize);
+    document.removeEventListener('touchend', stopResize);
     currentlyResizing = null;
 }
 
 function startDrag(topBar, x, y) {
-    // save startLocation for dragging
-    let draggingEl = topBar.parentElement;
-    isDragging = true; //boolean (can also be currentlyDragging != null?)
     currentlyDragging = topBar.parentElement;
-    offsetX = x - draggingEl.offsetLeft;
-    offsetY = y - draggingEl.offsetTop;
-    topBar.style.cursor = "grabbing";
+    isDragging = true;
+    offsetX = x - currentlyDragging.offsetLeft;
+    offsetY = y - currentlyDragging.offsetTop;
+    topBar.style.cursor = 'grabbing';
 
-    handleMouseMoveDrag = (e) => onDrag(e.clientX, e.clientY);
-    handleTouchMoveDrag = (e) => {
-        const touch = e.touches[0];
+    handleMouseMoveDrag = event => onDrag(event.clientX, event.clientY);
+    handleTouchMoveDrag = event => {
+        const touch = event.touches[0];
         onDrag(touch.clientX, touch.clientY);
     };
-
-    handleMouseSnappingZone = (e) => handleSnappingZone(e, e.clientX, e.clientY);
-    handleTouchSnappingZone = (e) => {
-        const touch = e.touches[0];
-        handleSnappingZone(e, touch.clientX, touch.clientY);
+    handleMouseSnappingZone = event =>
+        handleSnappingZone(event, event.clientX, event.clientY);
+    handleTouchSnappingZone = event => {
+        const touch = event.touches[0];
+        handleSnappingZone(event, touch.clientX, touch.clientY);
     };
-    document.addEventListener("mousemove", handleMouseMoveDrag);
-    document.addEventListener("touchmove", handleTouchMoveDrag, { passive: false });
-    document.addEventListener("mousemove", handleMouseSnappingZone);
-    document.addEventListener("mouseup", stopDrag);
-    document.addEventListener("touchend", stopDrag);
-    document.addEventListener("touchmove", handleTouchSnappingZone, { passive: false });
+
+    document.addEventListener('mousemove', handleMouseMoveDrag);
+    document.addEventListener('touchmove', handleTouchMoveDrag, { passive: false });
+    document.addEventListener('mousemove', handleMouseSnappingZone);
+    document.addEventListener('touchmove', handleTouchSnappingZone, { passive: false });
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
 }
 
 function onDrag(x, y) {
-    if (isDragging) {
-        let newLeft = (x - offsetX) + "px";
-        let newTop = (y - offsetY) + "px";
-        newLeft = newLeft < 50 ? 50 : newLeft;
-        newTop = newTop < 50 ? 50 : newTop;
-        currentlyDragging.style.left = newLeft;
-        currentlyDragging.style.top = newTop;
+    if (!isDragging) {
+        return;
     }
+
+    currentlyDragging.style.left = `${Math.max(navbarWidth, x - offsetX)}px`;
+    currentlyDragging.style.top = `${Math.max(0, y - offsetY)}px`;
 }
 
 function stopDrag() {
-    let app = currentlyDragging;
-    if (app) {
-        document.removeEventListener("mousemove", handleMouseMoveDrag);
-        document.removeEventListener("touchmove", handleTouchMoveDrag);
-        document.removeEventListener("mousemove", handleMouseSnappingZone);
-        document.removeEventListener("touchmove", handleTouchSnappingZone);
-        document.removeEventListener("mouseup", stopDrag);
-        document.removeEventListener("touchend", stopDrag);
-
-        if (isSuggesting) {
-            snapWindowToZone(app, snapArea);
-            isSuggesting = false;
-            snapOverlay.style.display = 'none';
+    if (currentlyDragging) {
+        if (isSuggesting && snapArea) {
+            snapWindowToZone(currentlyDragging, snapArea);
         }
-
-        updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
-        isDragging = false;
-        currentlyDragging.querySelectorAll('.topBar')[0].style.cursor = "grab";
+        updateWindowSettings(currentlyDragging);
+        currentlyDragging.querySelector('.topBar').style.cursor = 'grab';
         saveSettings();
     }
+
+    isDragging = false;
+    isSuggesting = false;
+    snapOverlay.style.display = 'none';
+    document.removeEventListener('mousemove', handleMouseMoveDrag);
+    document.removeEventListener('touchmove', handleTouchMoveDrag);
+    document.removeEventListener('mousemove', handleMouseSnappingZone);
+    document.removeEventListener('touchmove', handleTouchSnappingZone);
+    document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchend', stopDrag);
     currentlyDragging = null;
 }
 
-function loadSettings() {
-    const loadedSettings = localStorage.getItem('userSettings');
-    if (loadedSettings) {
-        settings = JSON.parse(loadedSettings);
-        if (!settings.openApps) {
-            resetSettings();
-        }
-        settings.openApps.forEach(e => {
-            openApp(e, false);
-        });
-    } else {
-        resetSettings();
-    }
+function handleSnappingZone(_event, x, y) {
+    const desktopRect = document.getElementById('window').getBoundingClientRect();
+    const width = desktopRect.width;
+    const height = desktopRect.height;
 
-    appElements.forEach(app => {
-        app.addEventListener('mousedown', () => {
-            setHighest(app);
-        });
-    });
-
-    const resizeButtons = document.querySelectorAll('.resize-button');
-    resizeButtons.forEach(button => {
-        button.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            startResize(e.currentTarget.parentElement.parentElement, e.clientX, e.clientY);
-        });
-        button.addEventListener('touchstart', function (e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            startResize(e.currentTarget.parentElement.parentElement, touch.clientX, touch.clientY);
-        });
-    });
-
-    const fullsizeButtons = document.querySelectorAll('.fullsize-button');
-    fullsizeButtons.forEach(button => {
-        button.addEventListener('mousedown', function (e) {
-            snapWindowToZone(e.target.parentElement.parentElement, 'full');
-        });
-        button.addEventListener('touchstart', function (e) {
-            snapWindowToZone(e.target.parentElement.parentElement, 'full');
-        });
-    });
-
-    const closeButtons = document.querySelectorAll('.close-button');
-    closeButtons.forEach(button => {
-        button.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            closeApp(e.currentTarget.parentElement.parentElement.id);
-        })
-    });
-
-    navItems.forEach(item => {
-        item.addEventListener("click", () => {
-            const targetId = item.getAttribute("data-target");
-            openApp(targetId, true);
-        });
-    });
-
-    topBars.forEach(topBar => {
-        topBar.addEventListener("mousedown", (e) => {
-            if (!currentlyResizing) {
-                startDrag(topBar, e.clientX, e.clientY);
-            }
-        });
-
-        topBar.addEventListener("touchstart", (e) => {
-            if (!currentlyResizing) {
-                const touch = e.touches[0];
-                startDrag(topBar, touch.clientX, touch.clientY);
-            }
-        });
-    });
-
-    fillSettingBlocks();
-}
-
-function fillSettingBlocks() {
-    const settingContent = document.querySelector("#appSettings");
-    settingContent.innerHTML = "";
-    for (const app of settings.appSettings) {
-        //create div
-        const appInfoBlock = document.createElement('div');
-        appInfoBlock.classList.add('settingsBlock');
-        const appInfoRow = "Name: " + app.name +
-            "\nWidth:" + app.width +
-            "\nHeight:" + app.height +
-            "\nX:" + app.x +
-            "\nY:" + app.y +
-            "\nZ:" + app.z;
-        appInfoBlock.innerText = appInfoRow;
-        settingContent.appendChild(appInfoBlock);
-    }
-}
-
-function saveSettings() {
-    localStorage.setItem('userSettings', JSON.stringify(settings));
-    fillSettingBlocks();
-}
-
-function updateApp(name, x, y, height, width, z) {
-    const index = settings.appSettings.findIndex(app => app.name === name);
-    let newApp = { name, x, y, height, width, z };
-    if (index !== -1) {
-        // App exists, update it
-        settings.appSettings[index] = { ...settings.appSettings[index], ...newApp };
-    } else {
-        // App doesn't exist, add it
-        settings.appSettings.push(newApp);
-    }
-}
-
-function openApp(targetId, forceHighest) {
-    currentlyClosing = false;
-    let index = settings.appSettings.findIndex(app => app.name === targetId);
-    let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-    let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-    if (index === -1) { //no settings saved for app
-        appElements.forEach(app => {
-            if (app.id === targetId) {
-                settings.appSettings.push({ name: targetId, x: w * 0.2 + 'px', y: h * 0.15 + 'px', height: h * 0.7 + 'px', width: w * 0.7 + 'px' });
-            }
-        });
-    }
-    //if in settings.openApps, don't do anything, else, add
-    if (!settings.openApps.includes(targetId)) {
-        settings.openApps.push(targetId);
-    }
-    index = settings.appSettings.findIndex(app => app.name === targetId);
-    appElements.forEach(app => {
-        if (app.id === targetId) {
-            app.style.height = settings.appSettings[index].height;
-            app.style.width = settings.appSettings[index].width;
-            app.style.top = settings.appSettings[index].y;
-            app.style.left = settings.appSettings[index].x;
-            app.style.zIndex = settings.appSettings[index].z;
-            if (app.id === 'snake') {
-                const scoreText = document.getElementById('snake-score');
-                scoreText.innerText = 'Highscore: ' + settings.appSettings[index].highScore;
-            }
-            if (forceHighest) {
-                setHighest(app);
-            }
-            app.classList.add("show");
-            updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
-        }
-    });
-    saveSettings();
-}
-
-function closeApp(targetId) {
-    appElements.forEach(app => {
-        if (app.id === targetId) {
-            app.classList.remove('show');
-            app.style.zIndex = '0';
-        }
-    });
-    navItems.forEach(item => {
-        if (item.dataset.target === targetId) {
-            item.classList.remove('active');
-        }
-    });
-    if (settings.openApps) {
-        let index = settings.openApps.findIndex(e => e.name === targetId);
-        settings.openApps.splice(index, 1);
-    }
-    currentlyClosing = true;
-    saveSettings();
-}
-
-function getAppSettings(targetId) {
-    if (settings) {
-        return settings.appSettings.find(e => e.name == targetId);
-    }
-}
-
-function handleSnappingZone(e, x, y) {
-    const mouseX = x;
-    const mouseY = y;
-
-    const windowElRect = document.querySelector('.window').getBoundingClientRect();
-    const winWidth = windowElRect.width;
-
-    const winHeight = windowElRect.height;
-
-    snapArea = null;
-    if (mouseX > winWidth - windowMarginX) {
-        if (mouseY > winHeight - windowMarginY) {
-            snapArea = 'bottom-right';
-        } else if (mouseY < windowMarginY) {
-            snapArea = 'top-right';
-        } else {
-            snapArea = 'right-half';
-        }
-    } else if (mouseX < windowMarginX + navbarWidth) {
-        if (mouseY > winHeight - windowMarginY) {
-            snapArea = 'bottom-left';
-        } else if (mouseY < windowMarginY) {
-            snapArea = 'top-left';
-        } else {
-            snapArea = 'left-half';
-        }
-    } else if (mouseY < windowMarginY) {
-        if (mouseX > winWidth / 2 + navbarWidth - windowMarginX && mouseX < windowMarginX + winWidth / 2 + navbarWidth) {
-            snapArea = 'full';
-        } else {
-            snapArea = 'top-half';
-        }
-    } else if (mouseY > winHeight - windowMarginY) {
+    snapArea = '';
+    if (x > width - windowMarginX) {
+        snapArea =
+            y > height - windowMarginY
+                ? 'bottom-right'
+                : y < windowMarginY
+                  ? 'top-right'
+                  : 'right-half';
+    } else if (x < windowMarginX + navbarWidth) {
+        snapArea =
+            y > height - windowMarginY
+                ? 'bottom-left'
+                : y < windowMarginY
+                  ? 'top-left'
+                  : 'left-half';
+    } else if (y < windowMarginY) {
+        snapArea =
+            x > width / 2 + navbarWidth - windowMarginX &&
+            x < windowMarginX + width / 2 + navbarWidth
+                ? 'full'
+                : 'top-half';
+    } else if (y > height - windowMarginY) {
         snapArea = 'bottom-half';
-    } else {
-        isSuggesting = false;
     }
-    if (!isSuggesting && snapArea) {
-        isSuggesting = true;
-        const app = e.target.parentElement;
-        snapOverlay.style.display = 'block';
-        snapOverlay.style.left = app.style.left;
-        snapOverlay.style.top = app.style.top;
-        snapOverlay.style.width = app.style.width;
-        snapOverlay.style.height = app.style.height;
-        snapOverlay.style.zIndex = settings.highestZ - 1;
-    } else if (isSuggesting) {
-        const zone = snapZones.find(z => z.name === snapArea);
-        snapOverlay.style.left = `${(zone.x * winWidth) + navbarWidth}px`;
-        snapOverlay.style.top = `${zone.y * winHeight}px`;
-        snapOverlay.style.width = `${zone.width * winWidth}px`;
-        snapOverlay.style.height = `${zone.height * winHeight}px`;
-    } else {
+
+    isSuggesting = Boolean(snapArea);
+    if (!isSuggesting) {
         snapOverlay.style.display = 'none';
+        return;
     }
+
+    const zone = snapZones.find(item => item.name === snapArea);
+    snapOverlay.style.display = 'block';
+    snapOverlay.style.left = `${zone.x * width + navbarWidth}px`;
+    snapOverlay.style.top = `${zone.y * height}px`;
+    snapOverlay.style.width = `${zone.width * width}px`;
+    snapOverlay.style.height = `${zone.height * height}px`;
+    snapOverlay.style.zIndex = Math.max(0, settings.highestZ - 1);
 }
 
-function updateSlidePosition() {
-    track.style.transform = 'translateX(-' + currentSlide * 100 + '%)';
-}
+function initialiseCarousel() {
+    const carousel = document.querySelector('.carousel');
+    const track = document.querySelector('.carousel-track');
+    if (!carousel || !track) {
+        return;
+    }
 
-function goToNextSlide() {
-    currentSlide = (currentSlide + 1) % slides.length;
-    updateSlidePosition();
-}
+    const slides = Array.from(track.children);
+    const nextButton = carousel.querySelector('.next');
+    const previousButton = carousel.querySelector('.prev');
+    const pinButton = carousel.querySelector('.pin');
+    let currentSlide = 0;
+    let isAutoplay = true;
+    let autoplayInterval;
 
-function goToPrevSlide() {
-    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-    updateSlidePosition();
-}
+    const updatePosition = () => {
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    };
+    const next = () => {
+        currentSlide = (currentSlide + 1) % slides.length;
+        updatePosition();
+    };
+    const previous = () => {
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        updatePosition();
+    };
+    const startAutoplay = () => {
+        clearInterval(autoplayInterval);
+        autoplayInterval = setInterval(next, 3000);
+    };
+    const stopAutoplay = () => clearInterval(autoplayInterval);
 
-function startAutoplay() {
-    autoplayInterval = setInterval(goToNextSlide, 3000);
-}
-
-function stopAutoplay() {
-    clearInterval(autoplayInterval);
-}
-
-function resizeHandler() {
-    snapZones.forEach(zone => {
-
+    nextButton.addEventListener('click', next);
+    previousButton.addEventListener('click', previous);
+    carousel.addEventListener('mouseenter', stopAutoplay);
+    carousel.addEventListener('mouseleave', () => {
+        if (isAutoplay) {
+            startAutoplay();
+        }
     });
+    pinButton.addEventListener('click', () => {
+        isAutoplay = !isAutoplay;
+        pinButton.innerHTML = isAutoplay
+            ? '<i class="fa-solid fa-thumbtack-slash"></i>'
+            : '<i class="fa-solid fa-thumbtack"></i>';
+        isAutoplay ? startAutoplay() : stopAutoplay();
+    });
+
+    startAutoplay();
 }
 
-document.addEventListener('resize', resizeHandler);
+window.getAppSettings = getAppSettings;
+window.saveSettings = saveSettings;
+window.resetSettings = resetSettings;
 
-// Button events
-nextButton.addEventListener('click', goToNextSlide);
-prevButton.addEventListener('click', goToPrevSlide);
-
-// Pause on hover
-carousel.addEventListener('mouseenter', stopAutoplay);
-carousel.addEventListener('mouseleave', () => {
-    if (isAutoplay) startAutoplay();
-});
-
-// Pin toggle
-pinButton.addEventListener('click', () => {
-    isAutoplay = !isAutoplay;
-    pinButton.innerHTML = isAutoplay ? '<i class="fa-solid fa-thumbtack-slash"></i>' : '<i class="fa-solid fa-thumbtack"></i>';
-    isAutoplay ? startAutoplay() : stopAutoplay();
-});
-
-// Start autoplay on load
-startAutoplay();
+initialiseDesktop();
