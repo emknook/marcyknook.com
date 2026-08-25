@@ -39,6 +39,89 @@ body {
   flex: 1;
 }
 
+.desktop-icons {
+  position: fixed;
+  top: 20px;
+  left: 72px;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: 96px;
+  gap: 16px;
+}
+
+.desktop-icon {
+  --app-color: white;
+
+  appearance: none;
+  width: 96px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+.desktop-icon:hover,
+.desktop-icon:focus-visible {
+  border-color: var(--app-color);
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.desktop-icon:active {
+  transform: translateY(1px);
+}
+
+.desktop-icon.m {
+  --app-color: var(--magenta);
+}
+
+.desktop-icon.y {
+  --app-color: var(--yellow);
+}
+
+.desktop-icon.r {
+  --app-color: var(--red);
+}
+
+.desktop-icon.g {
+  --app-color: var(--green);
+}
+
+.desktop-icon.b {
+  --app-color: var(--blue);
+}
+
+.desktop-icon-image {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 5px;
+  border: 2px solid var(--app-color);
+  border-radius: 12px;
+  background: #111;
+  font-size: 28px;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+}
+
+.desktop-icon-label {
+  display: inline;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: rgba(17, 17, 17, 0.85);
+  font-family: "Jersey 10", sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 .snake {
   min-height: calc(100% - 24px);
   min-width: 100%;
