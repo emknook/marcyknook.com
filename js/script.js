@@ -1,4 +1,5 @@
 const navItems = document.querySelectorAll(".nav-item");
+const desktopIcons = document.querySelectorAll(".desktop-icon");
 const appElements = document.querySelectorAll(".app-content");
 const topBars = document.querySelectorAll(".topBar");
 const snapOverlay = document.getElementById('snap-suggestion');
@@ -247,6 +248,13 @@ function loadSettings() {
     navItems.forEach(item => {
         item.addEventListener("click", () => {
             const targetId = item.getAttribute("data-target");
+            openApp(targetId, true);
+        });
+    });
+
+    desktopIcons.forEach(icon => {
+        icon.addEventListener("click", () => {
+            const targetId = icon.getAttribute("data-target");
             openApp(targetId, true);
         });
     });
