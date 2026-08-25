@@ -486,3 +486,26 @@ body {
     flex-direction: column;
   }
 }
+
+
+/* JSON-rendered desktop */
+.nav-item {
+  padding: 0;
+  font: inherit;
+}
+
+.settings-panel {
+  padding: 10px;
+}
+
+.settings-panel .button {
+  cursor: pointer;
+  background: #222;
+  font: inherit;
+}
+
+.load-error {
+  margin: 30px;
+  border-left: 3px solid var(--red);
+  padding: 12px;
+}
