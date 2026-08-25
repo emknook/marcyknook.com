@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "apps": [
+    {
+      "id": "app0",
+      "title": "Who is Marcy?",
+      "navLabel": "Who is Marcy?",
+      "icon": "🏠",
+      "color": "m",
+      "defaultOpen": true,
+      "content": {
+        "type": "html",
+        "html": "<section class=\"portfolio-section intro\">\n  <p class=\"eyebrow\">Front-end developer · curious maker</p>\n  <h1>Hi, I'm Marcy.</h1>\n  <p class=\"lead\">I build clear, playful interfaces with Vue and TypeScript. I like turning complicated ideas into things that feel understandable, useful and a little more human.</p>\n  <p>I enjoy creating reusable UI components, solving tricky interface behaviour and making experiences work well across different screen sizes. Away from the editor, I like hands-on creative projects, playful game ideas and learning by making.</p>\n  <div class=\"quick-facts\" aria-label=\"A few things about Marcy\">\n    <span>💻 Vue + TypeScript</span>\n    <span>🎨 Design-minded</span>\n    <span>🛠️ Learning by making</span>\n  </div>\n</section>"
+      },
+      "defaultWindow": {
+        "x": "20vw",
+        "y": "15vh",
+        "width": "70vw",
+        "height": "70vh"
+      }
+    },
+    {
+      "id": "app1",
+      "title": "Tech stack",
+      "navLabel": "Tech stack",
+      "icon": "🏃‍♀️‍➡️",
+      "color": "y",
+      "content": {
+        "type": "html",
+        "html": "<section class=\"portfolio-section\">\n  <p class=\"eyebrow\">The tools behind the windows</p>\n  <h2>My tech stack</h2>\n  <p class=\"lead\">My home turf is front-end development, with experience using the tools around it to build, test and ship complete features.</p>\n  <div class=\"stack-grid\">\n    <article class=\"stack-card\"><h3>Front end</h3><div class=\"tag-list\"><span>Vue 3</span><span>TypeScript</span><span>JavaScript</span><span>HTML</span><span>CSS</span><span>Pinia</span></div></article>\n    <article class=\"stack-card\"><h3>Tooling &amp; quality</h3><div class=\"tag-list\"><span>Vite</span><span>Vitest</span><span>ESLint</span><span>Prettier</span><span>Git</span><span>Docker</span></div></article>\n    <article class=\"stack-card\"><h3>Across the stack</h3><div class=\"tag-list\"><span>Django</span><span>Python</span><span>NestJS</span><span>TypeORM</span><span>PostgreSQL</span><span>Redis</span></div></article>\n    <article class=\"stack-card\"><h3>Web to mobile</h3><div class=\"tag-list\"><span>REST APIs</span><span>Cordova</span><span>Firebase</span><span>Responsive UI</span><span>Accessibility</span></div></article>\n  </div>\n  <div class=\"currently\"><strong>Currently:</strong> improving reusable components, cross-device experiences and the whole design-to-delivery process.</div>\n</section>"
+      },
+      "defaultWindow": {
+        "x": "22vw",
+        "y": "12vh",
+        "width": "68vw",
+        "height": "72vh"
+      }
+    },
+    {
+      "id": "app2",
+      "title": "Projects",
+      "navLabel": "Projects",
+      "icon": "📁",
+      "color": "r",
+      "content": {
+        "type": "html",
+        "html": "<div class=\"links\"><a href=\"https://github.com/emknook\" aria-label=\"Marcy on GitHub\"><i class=\"fa-brands fa-github\"></i></a></div>\n<div class=\"carousel\">\n  <div class=\"carousel-track\">\n    <div class=\"carousel-slide\"><iframe class=\"yt-video\" title=\"Project video one\" src=\"https://www.youtube.com/embed/X0koCI9zldM\"></iframe></div>\n    <div class=\"carousel-slide\"><iframe class=\"yt-video\" title=\"Project video two\" src=\"https://www.youtube.com/embed/0wYz5K-kfvk\"></iframe></div>\n    <div class=\"carousel-slide\"><iframe class=\"yt-video\" title=\"Project video three\" src=\"https://www.youtube.com/embed/nryTCrBZWrs\"></iframe></div>\n  </div>\n  <button class=\"carousel-button prev\" aria-label=\"Previous project\"><i class=\"fa-solid fa-caret-left\"></i></button>\n  <button class=\"carousel-button pin\" aria-label=\"Pause carousel\"><i class=\"fa-solid fa-thumbtack\"></i></button>\n  <button class=\"carousel-button next\" aria-label=\"Next project\"><i class=\"fa-solid fa-caret-right\"></i></button>\n</div>"
+      },
+      "defaultWindow": {
+        "x": "18vw",
+        "y": "14vh",
+        "width": "72vw",
+        "height": "70vh"
+      }
+    },
+    {
+      "id": "snake",
+      "title": "Snake",
+      "navLabel": "Snake",
+      "icon": "🐍",
+      "color": "g",
+      "content": {
+        "type": "html",
+        "html": "<div class=\"snake-score\" id=\"snake-score\">Highscore: 0</div>"
+      },
+      "contentClass": "snake",
+      "defaultWindow": {
+        "x": "25vw",
+        "y": "12vh",
+        "width": "60vw",
+        "height": "76vh"
+      }
+    },
+    {
+      "id": "settings",
+      "title": "Settings",
+      "navLabel": "Settings",
+      "icon": "⚙️",
+      "color": "b",
+      "content": {
+        "type": "html",
+        "html": "<section class=\"settings-panel\">\n  <p>Window positions and sizes are saved only in this browser.</p>\n  <button class=\"button\" type=\"button\" data-action=\"reset-settings\">Reset layout</button>\n  <div id=\"appSettings\" class=\"appSettings\"></div>\n</section>"
+      },
+      "defaultWindow": {
+        "x": "24vw",
+        "y": "18vh",
+        "width": "60vw",
+        "height": "60vh"
+      }
+    }
+  ]
+}
