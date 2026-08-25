@@ -70,25 +70,71 @@
         <div class="links">
           <a href="https://github.com/emknook"><i class="fa-brands fa-github"></i></a>
         </div>
-        <div class="carousel">
-          <div class="carousel-track">
-            <div class="carousel-slide">
-              <iframe class="yt-video" src="https://www.youtube.com/embed/X0koCI9zldM">
-              </iframe>
-            </div>
-            <div class="carousel-slide">
-              <iframe class="yt-video" src="https://www.youtube.com/embed/0wYz5K-kfvk">
-              </iframe>
-            </div>
-            <div class="carousel-slide">
-              <iframe class="yt-video" src="https://www.youtube.com/embed/nryTCrBZWrs">
-              </iframe>
+        <section class="carousel" aria-roledescription="carousel" aria-label="Selected projects">
+          <div class="carousel-viewport">
+            <div class="carousel-track">
+              <article class="carousel-slide" aria-roledescription="slide" aria-label="1 of 3">
+                <div class="project-video">
+                  <iframe class="yt-video" src="https://www.youtube.com/embed/X0koCI9zldM"
+                    title="Project video 1" loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+                </div>
+                <div class="project-caption">
+                  <span class="project-number">01</span>
+                  <div>
+                    <h2>Project reel</h2>
+                    <p>A peek at something I made. Press play, or browse the rest of the collection.</p>
+                  </div>
+                </div>
+              </article>
+              <article class="carousel-slide" aria-roledescription="slide" aria-label="2 of 3" aria-hidden="true">
+                <div class="project-video">
+                  <iframe class="yt-video" src="https://www.youtube.com/embed/0wYz5K-kfvk"
+                    title="Project video 2" loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+                </div>
+                <div class="project-caption">
+                  <span class="project-number">02</span>
+                  <div>
+                    <h2>Project reel</h2>
+                    <p>Another experiment from my archive, collected here as part of my creative work.</p>
+                  </div>
+                </div>
+              </article>
+              <article class="carousel-slide" aria-roledescription="slide" aria-label="3 of 3" aria-hidden="true">
+                <div class="project-video">
+                  <iframe class="yt-video" src="https://www.youtube.com/embed/nryTCrBZWrs"
+                    title="Project video 3" loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+                </div>
+                <div class="project-caption">
+                  <span class="project-number">03</span>
+                  <div>
+                    <h2>Project reel</h2>
+                    <p>One more project in motion. Use the arrows or swipe to move between videos.</p>
+                  </div>
+                </div>
+              </article>
             </div>
           </div>
-          <button class="carousel-button prev"><i class="fa-solid fa-caret-left"></i></button>
-          <button class="carousel-button pin"><i class="fa-solid fa-thumbtack"></i></button>
-          <button class="carousel-button next"><i class="fa-solid fa-caret-right"></i></button>
-        </div>
+          <div class="carousel-controls">
+            <button class="carousel-button prev" type="button" aria-label="Previous project">
+              <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            </button>
+            <div class="carousel-dots" role="group" aria-label="Choose a project"></div>
+            <button class="carousel-button autoplay-toggle" type="button" aria-label="Pause automatic slides"
+              aria-pressed="false">
+              <i class="fa-solid fa-pause" aria-hidden="true"></i>
+            </button>
+            <button class="carousel-button next" type="button" aria-label="Next project">
+              <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="carousel-status" aria-live="polite">Project 1 of 3</p>
+        </section>
       </div>
     </div>
     <div class="app-content resizable g" id="snake">
