@@ -7,6 +7,8 @@ const carousel = document.querySelector('.carousel');
 const windowMarginY = 30;
 const windowMarginX = 50;
 const navbarWidth = 52;
+const minimumWindowWidth = 220;
+const minimumWindowHeight = 140;
 const track = document.querySelector('.carousel-track');
 const slides = Array.from(track.children);
 const nextButton = document.querySelector('.next');
@@ -14,7 +16,8 @@ const prevButton = document.querySelector('.prev');
 let borderSize = 4;
 let isDragging = false;
 let currentlyResizing;
-let startX, startY, startWidth, startHeight, startPosLeft;
+let startX, startY, startWidth, startHeight, startPosLeft, startPosTop;
+let resizeDirection;
 let handleMouseMoveDrag, handleTouchMoveDrag, handleMouseMoveResize, handleTouchMoveResize, handleTouchSnappingZone, handleMouseSnappingZone;
 let offsetX, offsetY;
 let currentlyDragging;
@@ -82,8 +85,9 @@ function setHighest(app) {
     saveSettings();
 }
 
-function startResize(app, x, y) {
+function startResize(app, x, y, direction) {
     currentlyResizing = app;
+    resizeDirection = direction;
     startX = x;
     startY = y;
     startWidth = parseInt(document.defaultView.getComputedStyle(currentlyResizing).width, 10);
@@ -92,6 +96,7 @@ function startResize(app, x, y) {
     startPosTop = parseInt(document.defaultView.getComputedStyle(currentlyResizing).top, 10);
     handleMouseMoveResize = (e) => onResize(e.clientX, e.clientY);
     handleTouchMoveResize = (e) => {
+        e.preventDefault();
         const touch = e.touches[0];
         onResize(touch.clientX, touch.clientY);
     };
@@ -103,18 +108,58 @@ function startResize(app, x, y) {
 }
 
 function onResize(x, y) {
-    if (currentlyResizing) {
-        offsetX = x - startX;
-        offsetY = y - startY;
-        let newWidth = startWidth - offsetX;
-        let newHeight = startHeight - offsetY;
-        let newTop = startPosTop + offsetY;
-        let newLeft = startPosLeft + offsetX;
-        currentlyResizing.style.left = newLeft + 'px';
-        currentlyResizing.style.width = newWidth + 'px';
-        currentlyResizing.style.height = newHeight + 'px';
-        currentlyResizing.style.top = newTop + 'px';
+    if (!currentlyResizing) {
+        return;
     }
+
+    offsetX = x - startX;
+    offsetY = y - startY;
+
+    let newWidth = startWidth;
+    let newHeight = startHeight;
+    let newLeft = startPosLeft;
+    let newTop = startPosTop;
+
+    if (resizeDirection.includes('e')) {
+        newWidth = Math.max(
+            minimumWindowWidth,
+            startWidth + offsetX
+        );
+    }
+
+    if (resizeDirection.includes('s')) {
+        newHeight = Math.max(
+            minimumWindowHeight,
+            startHeight + offsetY
+        );
+    }
+
+    if (resizeDirection.includes('w')) {
+        newWidth = Math.max(
+            minimumWindowWidth,
+            startWidth - offsetX
+        );
+        newLeft =
+            startPosLeft +
+            startWidth -
+            newWidth;
+    }
+
+    if (resizeDirection.includes('n')) {
+        newHeight = Math.max(
+            minimumWindowHeight,
+            startHeight - offsetY
+        );
+        newTop =
+            startPosTop +
+            startHeight -
+            newHeight;
+    }
+
+    currentlyResizing.style.left = newLeft + 'px';
+    currentlyResizing.style.top = newTop + 'px';
+    currentlyResizing.style.width = newWidth + 'px';
+    currentlyResizing.style.height = newHeight + 'px';
 }
 
 function stopResize() {
@@ -128,6 +173,64 @@ function stopResize() {
         saveSettings();
     }
     currentlyResizing = null;
+    resizeDirection = null;
+}
+
+function addWindowResizeHandles() {
+    const directions = [
+        'n',
+        'ne',
+        'e',
+        'se',
+        's',
+        'sw',
+        'w',
+        'nw'
+    ];
+
+    appElements.forEach(app => {
+        directions.forEach(direction => {
+            const handle = document.createElement('div');
+
+            handle.className =
+                'window-resize-handle ' +
+                'window-resize-' +
+                direction;
+
+            handle.dataset.resizeDirection = direction;
+            handle.setAttribute('aria-hidden', 'true');
+
+            handle.addEventListener('mousedown', event => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                setHighest(app);
+                startResize(
+                    app,
+                    event.clientX,
+                    event.clientY,
+                    direction
+                );
+            });
+
+            handle.addEventListener('touchstart', event => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const touch = event.touches[0];
+
+                setHighest(app);
+                startResize(
+                    app,
+                    touch.clientX,
+                    touch.clientY,
+                    direction
+                );
+            }, { passive: false });
+
+            app.appendChild(handle);
+        });
+    });
 }
 
 function startDrag(topBar, x, y) {
@@ -194,6 +297,8 @@ function stopDrag() {
 }
 
 function loadSettings() {
+    addWindowResizeHandles();
+
     const loadedSettings = localStorage.getItem('userSettings');
     if (loadedSettings) {
         settings = JSON.parse(loadedSettings);
@@ -217,12 +322,12 @@ function loadSettings() {
     resizeButtons.forEach(button => {
         button.addEventListener('mousedown', function (e) {
             e.preventDefault();
-            startResize(e.currentTarget.parentElement.parentElement, e.clientX, e.clientY);
+            startResize(e.currentTarget.parentElement.parentElement, e.clientX, e.clientY, 'nw');
         });
         button.addEventListener('touchstart', function (e) {
             e.preventDefault();
             const touch = e.touches[0];
-            startResize(e.currentTarget.parentElement.parentElement, touch.clientX, touch.clientY);
+            startResize(e.currentTarget.parentElement.parentElement, touch.clientX, touch.clientY, 'nw');
         });
     });
 
