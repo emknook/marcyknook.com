@@ -3,6 +3,7 @@ const gameSpeed = 200;
 
 const correctionWindow = 80;
 const maxQueueLength = 3;
+const minSwipeDistance = 24;
 
 const snakeContainer = document
     .getElementById("snake")
@@ -53,6 +54,29 @@ let berries = [];
  */
 
 function setupSnake() {
+    clearInterval(snakeInterval);
+
+    snake = [
+        {
+            x: Math.floor(fieldSize / 2),
+            y: Math.floor(fieldSize / 2) - 1
+        },
+        {
+            x: Math.floor(fieldSize / 2),
+            y: Math.floor(fieldSize / 2)
+        },
+        {
+            x: Math.floor(fieldSize / 2),
+            y: Math.floor(fieldSize / 2) + 1
+        }
+    ];
+
+    currentDirection = "down";
+    directionQueue = [];
+    lastDirectionInputTime = 0;
+
+    score = 0;
+    berries = [];
     addBerries(3, 4);
 
     gameState = "playing";
@@ -352,6 +376,10 @@ function handleKeyPress(event) {
     }
 
     if (gameState === "gameover") {
+        if (key === " ") {
+            setupSnake();
+        }
+
         return;
     }
 
@@ -391,6 +419,82 @@ function handleKeyPress(event) {
 }
 
 document.addEventListener("keydown", handleKeyPress);
+
+let swipeStart = null;
+
+function handlePointerDown(event) {
+    if (event.pointerType === "mouse") {
+        return;
+    }
+
+    swipeStart = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY
+    };
+
+    canvasElement.setPointerCapture(event.pointerId);
+    event.preventDefault();
+}
+
+function handlePointerUp(event) {
+    if (
+        !swipeStart ||
+        swipeStart.pointerId !== event.pointerId
+    ) {
+        return;
+    }
+
+    const deltaX = event.clientX - swipeStart.x;
+    const deltaY = event.clientY - swipeStart.y;
+    const distance = Math.hypot(deltaX, deltaY);
+
+    swipeStart = null;
+
+    if (
+        gameState === "ready" ||
+        gameState === "gameover"
+    ) {
+        if (distance < minSwipeDistance) {
+            setupSnake();
+        }
+
+        return;
+    }
+
+    if (
+        gameState !== "playing" ||
+        distance < minSwipeDistance
+    ) {
+        return;
+    }
+
+    const direction =
+        Math.abs(deltaX) > Math.abs(deltaY)
+            ? deltaX > 0
+                ? "right"
+                : "left"
+            : deltaY > 0
+                ? "down"
+                : "up";
+
+    queueDirection(direction);
+    drawGame();
+    event.preventDefault();
+}
+
+function cancelSwipe(event) {
+    if (
+        swipeStart &&
+        swipeStart.pointerId === event.pointerId
+    ) {
+        swipeStart = null;
+    }
+}
+
+canvasElement.addEventListener("pointerdown", handlePointerDown);
+canvasElement.addEventListener("pointerup", handlePointerUp);
+canvasElement.addEventListener("pointercancel", cancelSwipe);
 
 
 /*
@@ -450,7 +554,7 @@ function drawGame() {
     );
 
     if (gameState === "ready") {
-        drawMessage("Press space to start!");
+        drawMessage("Tap or press space to start!");
         return;
     }
 
