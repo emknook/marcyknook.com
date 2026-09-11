@@ -349,6 +349,10 @@ function isOppositeDirection(a, b) {
  */
 
 function handleKeyPress(event) {
+    const app = document.getElementById('snake');
+    if (!app.classList.contains('show') ||
+        !document.querySelector('.nav-item[data-target="snake"]').classList.contains('active') ||
+        event.target.closest('input, select, textarea, button, [contenteditable="true"]')) return;
     const key = event.key.toLowerCase();
 
     const gameKeys = [
@@ -568,7 +572,7 @@ function drawGame() {
     }
 
     if (gameState === "gameover") {
-        drawMessage("Game over!");
+        drawMessage("Game over!", "Tap or press Space to play again");
     }
 }
 
@@ -717,7 +721,7 @@ function drawDirection() {
     );
 }
 
-function drawMessage(message) {
+function drawMessage(message, hint = '') {
     canvas.font = "20px Arial";
     canvas.fillStyle = "white";
     canvas.textBaseline = "middle";
@@ -726,8 +730,15 @@ function drawMessage(message) {
     canvas.fillText(
         message,
         canvasElement.width / 2,
-        canvasElement.height / 2
+        canvasElement.height / 2 - (hint ? 16 : 0),
+        Math.max(1, canvasElement.width - 16)
     );
+
+    if (hint) {
+        canvas.font = "14px Arial";
+        canvas.fillText(hint, canvasElement.width / 2, canvasElement.height / 2 + 14,
+            Math.max(1, canvasElement.width - 16));
+    }
 
     canvas.textAlign = "start";
 }

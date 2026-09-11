@@ -9,7 +9,6 @@ const carouselStatus = document.querySelector('.carousel-status');
 const carousel = document.querySelector('.carousel');
 const windowMarginY = 30;
 const windowMarginX = 50;
-const navbarWidth = 52;
 const minimumWindowWidth = 220;
 const minimumWindowHeight = 140;
 const track = document.querySelector('.carousel-track');
@@ -47,30 +46,35 @@ const snapZones = [
 
 function snapWindowToZone(el, zoneName) {
     const zone = snapZones.find(z => z.name === zoneName);
-    const windowElRect = el.parentElement.getBoundingClientRect();
-    const w = windowElRect.width;
-    const h = windowElRect.height;
-
-    el.style.position = 'absolute';
-    el.style.left = `${Math.floor(zone.x * w) + navbarWidth}px`;
-    el.style.top = `${Math.floor(zone.y * h)}px`;
-    el.style.width = `${Math.floor(zone.width * w) - borderSize}px`;
-    el.style.height = `${Math.floor(zone.height * h) - borderSize}px`;
+    if (!zone) return;
+    rememberMaximizedLayout(el, zoneName === 'full');
+    el.style.left = (zone.x * 100) + '%';
+    el.style.top = (zone.y * 100) + '%';
+    el.style.width = (zone.width * 100) + '%';
+    el.style.height = (zone.height * 100) + '%';
+    updateApp(el.id, el.style.left, el.style.top, el.style.height, el.style.width, el.style.zIndex);
+    saveSettings();
 }
 
 function resetSettings() {
+    resetBackground();
     settings = {
         theme: 'dark',
         fontSize: 'large',
         openApps: ['app0'],
         appSettings: [],
+        desktopPositions: {},
+        taskbarPosition: 'left',
         highestZ: "1"
     };
+    applyBackgroundFit();
     appElements.forEach(app => {
         closeApp(app.id)
     });
     saveSettings();
     openApp('app0', false);
+    applyTaskbarPosition();
+    layoutDesktopIcons();
 }
 
 function setHighest(app) {
@@ -117,6 +121,7 @@ function onResize(x, y) {
 
     offsetX = x - startX;
     offsetY = y - startY;
+    if (offsetX || offsetY) rememberMaximizedLayout(currentlyResizing, false);
 
     let newWidth = startWidth;
     let newHeight = startHeight;
@@ -237,6 +242,7 @@ function addWindowResizeHandles() {
 }
 
 function startDrag(topBar, x, y) {
+    cancelDrag();
     // save startLocation for dragging
     let draggingEl = topBar.parentElement;
     isDragging = true; //boolean (can also be currentlyDragging != null?)
@@ -245,7 +251,13 @@ function startDrag(topBar, x, y) {
     offsetY = y - draggingEl.offsetTop;
     topBar.style.cursor = "grabbing";
 
-    handleMouseMoveDrag = (e) => onDrag(e.clientX, e.clientY);
+    handleMouseMoveDrag = (e) => {
+        if (!(e.buttons & 1)) {
+            cancelDrag();
+            return;
+        }
+        onDrag(e.clientX, e.clientY);
+    };
     handleTouchMoveDrag = (e) => {
         const touch = e.touches[0];
         onDrag(touch.clientX, touch.clientY);
@@ -259,6 +271,8 @@ function startDrag(topBar, x, y) {
     document.addEventListener("mousemove", handleMouseMoveDrag);
     document.addEventListener("touchmove", handleTouchMoveDrag, { passive: false });
     document.addEventListener("mousemove", handleMouseSnappingZone);
+    window.addEventListener("blur", cancelDrag);
+    document.addEventListener("touchcancel", cancelDrag);
     document.addEventListener("mouseup", stopDrag);
     document.addEventListener("touchend", stopDrag);
     document.addEventListener("touchmove", handleTouchSnappingZone, { passive: false });
@@ -266,6 +280,7 @@ function startDrag(topBar, x, y) {
 
 function onDrag(x, y) {
     if (isDragging) {
+        rememberMaximizedLayout(currentlyDragging, false);
         let newLeft = (x - offsetX) + "px";
         let newTop = (y - offsetY) + "px";
         newLeft = newLeft < 50 ? 50 : newLeft;
@@ -275,32 +290,45 @@ function onDrag(x, y) {
     }
 }
 
-function stopDrag() {
-    let app = currentlyDragging;
+function clearSnapPreview() {
+    isSuggesting = false;
+    snapArea = null;
+    snapOverlay.style.display = 'none';
+}
+
+function cancelDrag() {
+    stopDrag(null, false);
+}
+
+function stopDrag(event, shouldSnap = true) {
+    const app = currentlyDragging;
+    const zone = isSuggesting ? snapArea : null;
+    document.removeEventListener("mousemove", handleMouseMoveDrag);
+    document.removeEventListener("touchmove", handleTouchMoveDrag);
+    document.removeEventListener("mousemove", handleMouseSnappingZone);
+    document.removeEventListener("touchmove", handleTouchSnappingZone);
+    document.removeEventListener("mouseup", stopDrag);
+    document.removeEventListener("touchend", stopDrag);
+    document.removeEventListener("touchcancel", cancelDrag);
+    window.removeEventListener("blur", cancelDrag);
+    isDragging = false;
+    currentlyDragging = null;
+    clearSnapPreview();
+
     if (app) {
-        document.removeEventListener("mousemove", handleMouseMoveDrag);
-        document.removeEventListener("touchmove", handleTouchMoveDrag);
-        document.removeEventListener("mousemove", handleMouseSnappingZone);
-        document.removeEventListener("touchmove", handleTouchSnappingZone);
-        document.removeEventListener("mouseup", stopDrag);
-        document.removeEventListener("touchend", stopDrag);
-
-        if (isSuggesting) {
-            snapWindowToZone(app, snapArea);
-            isSuggesting = false;
-            snapOverlay.style.display = 'none';
-        }
-
+        app.querySelector('.topBar').style.cursor = "grab";
+        if (shouldSnap && zone) snapWindowToZone(app, zone);
         updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
-        isDragging = false;
-        currentlyDragging.querySelectorAll('.topBar')[0].style.cursor = "grab";
         saveSettings();
     }
-    currentlyDragging = null;
 }
 
 function loadSettings() {
     addWindowResizeHandles();
+    window.addEventListener("resize", () => {
+        cancelDrag();
+        stopResize();
+    });
 
     const loadedSettings = localStorage.getItem('userSettings');
     if (loadedSettings) {
@@ -308,6 +336,8 @@ function loadSettings() {
         if (!settings.openApps) {
             resetSettings();
         }
+        applyTaskbarPosition();
+        migrateWindowLayouts();
         settings.openApps.forEach(e => {
             openApp(e, false);
         });
@@ -334,82 +364,116 @@ function loadSettings() {
         });
     });
 
-    const fullsizeButtons = document.querySelectorAll('.fullsize-button');
-    fullsizeButtons.forEach(button => {
-        button.addEventListener('mousedown', function (e) {
-            snapWindowToZone(e.target.parentElement.parentElement, 'full');
+    document.querySelectorAll('.resize-button').forEach(button => {
+        button.addEventListener('keydown', event => {
+            const movement = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
+            if (!movement) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const app = button.closest('.app-content');
+            setHighest(app);
+            startResize(app, 0, 0, 'nw');
+            onResize(...movement);
+            stopResize();
         });
-        button.addEventListener('touchstart', function (e) {
-            snapWindowToZone(e.target.parentElement.parentElement, 'full');
+    });
+    document.querySelectorAll('.fullsize-button').forEach(button => {
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            const app = button.closest('.app-content');
+            setHighest(app);
+            toggleMaximizedWindow(app);
         });
     });
 
     const closeButtons = document.querySelectorAll('.close-button');
     closeButtons.forEach(button => {
-        button.addEventListener('mousedown', function (e) {
+        button.addEventListener('click', function (e) {
             e.preventDefault();
+            e.stopPropagation();
             closeApp(e.currentTarget.parentElement.parentElement.id);
         })
+    });
+
+    document.querySelectorAll('.minimize-button').forEach(button => {
+        button.addEventListener('click', event => {
+            event.stopPropagation();
+            minimizeApp(button.closest('.app-content').id);
+        });
     });
 
     navItems.forEach(item => {
         item.addEventListener("click", () => {
             const targetId = item.getAttribute("data-target");
-            openApp(targetId, true);
+            toggleTaskbarApp(targetId);
         });
     });
 
-    desktopIcons.forEach(icon => {
-        icon.addEventListener("click", () => {
-            const targetId = icon.getAttribute("data-target");
-            openApp(targetId, true);
-        });
-    });
+    initializeNotes();
+    initializeStyleSettings();
+    initializeTaskbarSettings();
+    initializeDesktopIcons();
 
     topBars.forEach(topBar => {
         topBar.addEventListener("mousedown", (e) => {
-            if (!currentlyResizing) {
+            if (e.button === 0 && !currentlyResizing && !e.target.closest(".close-button, .minimize-button, .resize-button, .fullsize-button")) {
                 startDrag(topBar, e.clientX, e.clientY);
             }
         });
 
         topBar.addEventListener("touchstart", (e) => {
-            if (!currentlyResizing) {
+            if (!currentlyResizing && !e.target.closest(".close-button, .minimize-button, .resize-button, .fullsize-button")) {
                 const touch = e.touches[0];
                 startDrag(topBar, touch.clientX, touch.clientY);
             }
         });
     });
 
-    fillSettingBlocks();
+    saveSettings();
 }
 
 function fillSettingBlocks() {
     const settingContent = document.querySelector("#appSettings");
     settingContent.innerHTML = "";
     for (const app of settings.appSettings) {
-        //create div
-        const appInfoBlock = document.createElement('div');
-        appInfoBlock.classList.add('settingsBlock');
-        const appInfoRow = "Name: " + app.name +
-            "\nWidth:" + app.width +
-            "\nHeight:" + app.height +
-            "\nX:" + app.x +
-            "\nY:" + app.y +
-            "\nZ:" + app.z;
-        appInfoBlock.innerText = appInfoRow;
-        settingContent.appendChild(appInfoBlock);
+        const element = document.getElementById(app.name);
+        if (!element) continue;
+        const card = document.createElement('article');
+        card.className = 'settingsBlock';
+        const heading = document.createElement('h3');
+        heading.textContent = element.querySelector('.title-bar').textContent;
+        const state = document.createElement('p');
+        state.className = 'setting-hint';
+        state.textContent = !settings.openApps.includes(app.name) ? 'Closed'
+            : app.minimized ? 'Minimised — available in the taskbar' : 'Visible on desktop';
+        const geometry = document.createElement('p');
+        geometry.textContent = 'Size: ' + displayWindowPercentage(app.width) + ' wide × '
+            + displayWindowPercentage(app.height) + ' high. Position: '
+            + displayWindowPercentage(app.x) + ' from left, ' + displayWindowPercentage(app.y) + ' from top.';
+        card.append(heading, state, geometry);
+        settingContent.appendChild(card);
     }
 }
 
 function saveSettings() {
+    syncTaskbar();
+    syncWindowControls();
     localStorage.setItem('userSettings', JSON.stringify(settings));
     fillSettingBlocks();
 }
 
 function updateApp(name, x, y, height, width, z) {
     const index = settings.appSettings.findIndex(app => app.name === name);
-    let newApp = { name, x, y, height, width, z };
+    const desktop = document.querySelector('.window');
+    const newApp = {
+        name, z,
+        x: windowPercentage(x, desktop.clientWidth, '20%'),
+        y: windowPercentage(y, desktop.clientHeight, '15%'),
+        width: windowPercentage(width, desktop.clientWidth, '70%'),
+        height: windowPercentage(height, desktop.clientHeight, '70%')
+    };
+    const element = document.getElementById(name);
+    if (element) applyWindowLayout(element, newApp);
     if (index !== -1) {
         // App exists, update it
         settings.appSettings[index] = { ...settings.appSettings[index], ...newApp };
@@ -420,14 +484,14 @@ function updateApp(name, x, y, height, width, z) {
 }
 
 function openApp(targetId, forceHighest) {
+    if (!document.getElementById(targetId)?.classList.contains('app-content')) return;
     currentlyClosing = false;
     let index = settings.appSettings.findIndex(app => app.name === targetId);
-    let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-    let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
     if (index === -1) { //no settings saved for app
+        // TODO: Define per-app default sizes within the available desktop area, preserving saved window sizes.
         appElements.forEach(app => {
             if (app.id === targetId) {
-                settings.appSettings.push({ name: targetId, x: w * 0.2 + 'px', y: h * 0.15 + 'px', height: h * 0.7 + 'px', width: w * 0.7 + 'px' });
+                settings.appSettings.push({ name: targetId, x: '20%', y: '15%', height: '70%', width: '70%' });
             }
         });
     }
@@ -445,12 +509,15 @@ function openApp(targetId, forceHighest) {
             app.style.zIndex = settings.appSettings[index].z;
             if (app.id === 'snake') {
                 const scoreText = document.getElementById('snake-score');
-                scoreText.innerText = 'Highscore: ' + settings.appSettings[index].highScore;
+                scoreText.innerText = 'Highscore: ' + (settings.appSettings[index].highScore || 0);
             }
+            if (forceHighest) settings.appSettings[index].minimized = false;
+            app.classList.toggle('show', !settings.appSettings[index].minimized);
             if (forceHighest) {
                 setHighest(app);
+                app.tabIndex = -1;
+                app.focus({ preventScroll: true });
             }
-            app.classList.add("show");
             updateApp(app.id, app.style.left, app.style.top, app.style.height, app.style.width, app.style.zIndex);
         }
     });
@@ -458,6 +525,9 @@ function openApp(targetId, forceHighest) {
 }
 
 function closeApp(targetId) {
+    const saved = getAppSettings(targetId);
+    if (saved) saved.minimized = false;
+    pauseHiddenApp(targetId);
     appElements.forEach(app => {
         if (app.id === targetId) {
             app.classList.remove('show');
@@ -470,8 +540,7 @@ function closeApp(targetId) {
         }
     });
     if (settings.openApps) {
-        let index = settings.openApps.findIndex(e => e.name === targetId);
-        settings.openApps.splice(index, 1);
+        settings.openApps = settings.openApps.filter(id => id !== targetId);
     }
     currentlyClosing = true;
     saveSettings();
@@ -484,8 +553,17 @@ function getAppSettings(targetId) {
 }
 
 function handleSnappingZone(e, x, y) {
-    const mouseX = x;
-    const mouseY = y;
+    if (!isDragging || !currentlyDragging) {
+        clearSnapPreview();
+        return;
+    }
+    if (e.type === 'mousemove' && !(e.buttons & 1)) {
+        cancelDrag();
+        return;
+    }
+    const desktopRect = document.querySelector('.window').getBoundingClientRect();
+    const mouseX = x - desktopRect.left;
+    const mouseY = y - desktopRect.top;
 
     const windowElRect = document.querySelector('.window').getBoundingClientRect();
     const winWidth = windowElRect.width;
@@ -501,7 +579,7 @@ function handleSnappingZone(e, x, y) {
         } else {
             snapArea = 'right-half';
         }
-    } else if (mouseX < windowMarginX + navbarWidth) {
+    } else if (mouseX < windowMarginX) {
         if (mouseY > winHeight - windowMarginY) {
             snapArea = 'bottom-left';
         } else if (mouseY < windowMarginY) {
@@ -510,7 +588,7 @@ function handleSnappingZone(e, x, y) {
             snapArea = 'left-half';
         }
     } else if (mouseY < windowMarginY) {
-        if (mouseX > winWidth / 2 + navbarWidth - windowMarginX && mouseX < windowMarginX + winWidth / 2 + navbarWidth) {
+        if (mouseX > winWidth / 2 - windowMarginX && mouseX < windowMarginX + winWidth / 2) {
             snapArea = 'full';
         } else {
             snapArea = 'top-half';
@@ -520,24 +598,18 @@ function handleSnappingZone(e, x, y) {
     } else {
         isSuggesting = false;
     }
-    if (!isSuggesting && snapArea) {
-        isSuggesting = true;
-        const app = e.target.parentElement;
-        snapOverlay.style.display = 'block';
-        snapOverlay.style.left = app.style.left;
-        snapOverlay.style.top = app.style.top;
-        snapOverlay.style.width = app.style.width;
-        snapOverlay.style.height = app.style.height;
-        snapOverlay.style.zIndex = settings.highestZ - 1;
-    } else if (isSuggesting) {
-        const zone = snapZones.find(z => z.name === snapArea);
-        snapOverlay.style.left = `${(zone.x * winWidth) + navbarWidth}px`;
-        snapOverlay.style.top = `${zone.y * winHeight}px`;
-        snapOverlay.style.width = `${zone.width * winWidth}px`;
-        snapOverlay.style.height = `${zone.height * winHeight}px`;
-    } else {
-        snapOverlay.style.display = 'none';
+    const zone = snapZones.find(z => z.name === snapArea);
+    if (!zone) {
+        clearSnapPreview();
+        return;
     }
+    isSuggesting = true;
+    snapOverlay.style.display = 'block';
+    snapOverlay.style.left = (zone.x * winWidth) + 'px';
+    snapOverlay.style.top = (zone.y * winHeight) + 'px';
+    snapOverlay.style.width = (zone.width * winWidth) + 'px';
+    snapOverlay.style.height = (zone.height * winHeight) + 'px';
+    snapOverlay.style.zIndex = Number(currentlyDragging.style.zIndex || settings.highestZ) - 1;
 }
 
 function updateSlidePosition({ announce = true } = {}) {

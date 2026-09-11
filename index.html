@@ -9,46 +9,50 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styling/custom.css">
+  <link rel="stylesheet" href="styling/notes.css">
   <link rel="icon" type="image/x-icon" href="/images/favicon.png">
   <script src="https://kit.fontawesome.com/05c6f67ee8.js" crossorigin="anonymous"></script>
 </head>
 
-<body onload="loadSettings()">
-  <div class="nav-pane">
-    <div class="nav-item m" data-target="app0">
-      <span class="label">Who is Marcy?</span>
+<body data-taskbar-position="left" onload="loadSettings()">
+  <nav class="nav-pane" aria-label="Open applications">
+    <button type="button" class="nav-item m" data-target="app0" hidden>
+      <span class="label">About Marcy</span>
       <span class="icon">🏠</span>
-    </div>
-    <div class="nav-item y" data-target="app1">
-      <span class="label">Tech stack</span>
+    </button>
+    <button type="button" class="nav-item y" data-target="app1" hidden>
+      <span class="label">Tools &amp; Skills</span>
       <span class="icon">🏃‍♀️‍➡️</span>
-    </div>
-    <div class="nav-item r" data-target="app2">
-      <span class="label">Projects</span>
+    </button>
+    <button type="button" class="nav-item r" data-target="app2" hidden>
+      <span class="label">Project Gallery</span>
       <span class="icon">📁</span>
-    </div>
-    <div class="nav-item g" data-target="snake">
+    </button>
+    <button type="button" class="nav-item g" data-target="snake" hidden>
       <span class="label">Snake</span>
       <span class="icon">🐍</span>
-    </div>
-    <div class="nav-item b" data-target="settings">
-      <span class="label">Settings</span>
+    </button>
+    <button type="button" class="nav-item b" data-target="settings" hidden>
+      <span class="label">Desktop Settings</span>
       <span class="icon">⚙️</span>
-    </div>
-  </div>
+    </button>
+    <button type="button" class="nav-item y" data-target="notes" hidden>
+      <span class="label">Notes</span><span class="icon">📝</span>
+    </button>
+  </nav>
   <div class="window">
     <nav class="desktop-icons" aria-label="Desktop applications">
       <button class="desktop-icon m" type="button" data-target="app0">
         <span class="desktop-icon-image" aria-hidden="true">🏠</span>
-        <span class="desktop-icon-label">Who is Marcy?</span>
+        <span class="desktop-icon-label">About Marcy</span>
       </button>
       <button class="desktop-icon y" type="button" data-target="app1">
         <span class="desktop-icon-image" aria-hidden="true">🏃‍♀️‍➡️</span>
-        <span class="desktop-icon-label">Tech stack</span>
+        <span class="desktop-icon-label">Tools &amp; Skills</span>
       </button>
       <button class="desktop-icon r" type="button" data-target="app2">
         <span class="desktop-icon-image" aria-hidden="true">📁</span>
-        <span class="desktop-icon-label">Projects</span>
+        <span class="desktop-icon-label">Project Gallery</span>
       </button>
       <button class="desktop-icon g" type="button" data-target="snake">
         <span class="desktop-icon-image" aria-hidden="true">🐍</span>
@@ -56,15 +60,22 @@
       </button>
       <button class="desktop-icon b" type="button" data-target="settings">
         <span class="desktop-icon-image" aria-hidden="true">⚙️</span>
-        <span class="desktop-icon-label">Settings</span>
+        <span class="desktop-icon-label">Desktop Settings</span>
+      </button>
+      <button class="desktop-icon y" type="button" data-target="notes">
+        <span class="desktop-icon-image" aria-hidden="true">📝</span>
+        <span class="desktop-icon-label">Notes</span>
       </button>
     </nav>
+    <section id="sticky-board" aria-label="Pinned sticky notes"></section>
+    <button id="notes-widget" type="button" aria-label="Create a sticky note" title="Click to create a sticky note · Drag to move" hidden>📝 <span>+ Sticky note</span></button>
     <div class="app-content resizable m" id="app0">
       <div class="topBar bg-m">
-        <div class="resize-button">↖</div>
-        <div class="fullsize-button">▢</div>
-        <div class="title-bar">Who is Marcy?</div>
-        <div class="close-button">X</div>
+        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
+        <div class="title-bar">About Marcy</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
       <div class="scrollwrapper" id="content">
 
@@ -72,10 +83,11 @@
     </div>
     <div class="app-content resizable y" id="app1">
       <div class="topBar bg-y">
-        <div class="resize-button">↖</div>
-        <div class="fullsize-button">▢</div>
-        <div class="title-bar">Tech stack</div>
-        <div class="close-button">X</div>
+        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
+        <div class="title-bar">Tools &amp; Skills</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
       <div class="scrollwrapper" id="content">
         ":)"
@@ -83,10 +95,11 @@
     </div>
     <div class="app-content resizable r" id="app2">
       <div class="topBar bg-r">
-        <div class="resize-button">↖</div>
-        <div class="fullsize-button">▢</div>
-        <div class="title-bar">Projects</div>
-        <div class="close-button">X</div>
+        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
+        <div class="title-bar">Project Gallery</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
       <div class="scrollwrapper" id="content">
         <div class="links">
@@ -98,45 +111,54 @@
               <article class="carousel-slide" aria-roledescription="slide" aria-label="1 of 3">
                 <div class="project-video">
                   <iframe class="yt-video" src="https://www.youtube.com/embed/X0koCI9zldM"
-                    title="Project video 1" loading="lazy"
+                    title="Play Leads AYonder (PLAY) — Godot project video" loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen></iframe>
                 </div>
                 <div class="project-caption">
                   <span class="project-number">01</span>
                   <div>
-                    <h2>Project reel</h2>
-                    <p>A peek at something I made. Press play, or browse the rest of the collection.</p>
+                    <h2>Play Leads AYonder (PLAY)</h2>
+                    <p class="project-meta">2025 · HKU · Godot</p>
+                    <p>A small test project exploring <em>homo ludens</em>: the idea of humans as playful beings.
+                      You are a bored office worker in a boring office, until a file on your computer starts
+                      talking to you. Open it to enter a game world where you can play and gain powers.</p>
                   </div>
                 </div>
               </article>
               <article class="carousel-slide" aria-roledescription="slide" aria-label="2 of 3" aria-hidden="true">
                 <div class="project-video">
                   <iframe class="yt-video" src="https://www.youtube.com/embed/0wYz5K-kfvk"
-                    title="Project video 2" loading="lazy"
+                    title="Tree Painter — Java project video" loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen></iframe>
                 </div>
                 <div class="project-caption">
                   <span class="project-number">02</span>
                   <div>
-                    <h2>Project reel</h2>
-                    <p>Another experiment from my archive, collected here as part of my creative work.</p>
+                    <h2>Tree Painter</h2>
+                    <p class="project-meta">Around 2020 · Avans · Java</p>
+                    <p>An assignment focused on object-oriented programming and updating an app at a fixed
+                      frame rate. I added a little character who could walk around and collect coins, just
+                      for fun. The app also wrote to files to save its game state.</p>
                   </div>
                 </div>
               </article>
               <article class="carousel-slide" aria-roledescription="slide" aria-label="3 of 3" aria-hidden="true">
                 <div class="project-video">
                   <iframe class="yt-video" src="https://www.youtube.com/embed/nryTCrBZWrs"
-                    title="Project video 3" loading="lazy"
+                    title="Flappy Bird — Unity prototype video" loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen></iframe>
                 </div>
                 <div class="project-caption">
                   <span class="project-number">03</span>
                   <div>
-                    <h2>Project reel</h2>
-                    <p>One more project in motion. Use the arrows or swipe to move between videos.</p>
+                    <h2>Flappy Bird</h2>
+                    <p class="project-meta">Around 2022 · Unity</p>
+                    <p>A Flappy Bird prototype without textures, with scoring like the original game.
+                      Objects are deleted once they leave the screen, so they do not keep accumulating
+                      outside the play area.</p>
                   </div>
                 </div>
               </article>
@@ -161,10 +183,11 @@
     </div>
     <div class="app-content resizable g" id="snake">
       <div class="topBar bg-g">
-        <div class="resize-button">↖</div>
-        <div class="fullsize-button">▢</div>
+        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <div class="title-bar">Snake</div>
-        <div class="close-button">X</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
       <div class="snake" id="content">
         <div class="snake-score" id="snake-score">Highscore: 0</div>
@@ -172,24 +195,144 @@
     </div>
     <div class="app-content resizable b" id="settings">
       <div class="topBar bg-b">
-        <div class="resize-button">↖</div>
-        <div class="fullsize-button">▢</div>
-        <div class="title-bar">Settings</div>
-        <div class="close-button">X</div>
+        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
+        <div class="title-bar">Desktop Settings</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
       <div class="scrollwrapper" id="content">
-        <!-- TODO: add reset button -->
-        <!-- TODO: add settings as options and load them as settings instead of text -->
-        <!-- TODO: define different startSizes per "app" -->
-        <!-- settings: Contrast | Theme | Konami unlock | Loaded -->
-        <div class="button" onclick="resetSettings()">Reset</div>
-        <div id="appSettings" class="appSettings"></div>
+        <header class="settings-intro">
+          <h1>Make this desktop yours</h1>
+          <p>Choose a background and arrange your workspace. Changes save automatically in this browser.</p>
+        </header>
+        <section class="settings-section" aria-labelledby="workspace-heading">
+          <h2 id="workspace-heading">Workspace</h2>
+          <p class="setting-hint">Double-click desktop icons to open apps. Drag icons to arrange them. Minimise a window to keep it in the taskbar; click its taskbar icon to bring it back.</p>
+        <label class="taskbar-setting" for="taskbar-position">Taskbar position
+          <select id="taskbar-position">
+            <option value="left">Left</option>
+            <option value="bottom">Bottom</option>
+            <option value="right">Right</option>
+            <option value="top">Top</option>
+          </select>
+        </label>
+        </section>
+        <fieldset class="style-settings">
+          <legend>Appearance</legend>
+          <label for="background-image">Desktop background</label>
+          <input id="background-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif">
+          <p class="setting-hint">Choose an image up to 20 MB. Saved only in this browser.</p>
+          <label for="background-fit">Image fit</label>
+          <select id="background-fit">
+            <option value="cover">Fill desktop (crop edges)</option>
+            <option value="contain">Fit entire image</option>
+            <option value="repeat">Tile image</option>
+          </select>
+          <button id="background-remove" type="button">Remove background</button>
+          <p id="background-status" class="setting-hint" role="status" aria-live="polite"></p>
+        </fieldset>
+        <details class="settings-section saved-layouts">
+          <summary>Saved window layouts</summary>
+          <p class="setting-hint">Sizes and positions scale with the desktop, excluding the taskbar. Values below are rounded to whole percentages; your layout saves with up to six decimal places.</p>
+          <div id="appSettings" class="appSettings"></div>
+        </details>
+        <section class="settings-section reset-section" aria-labelledby="reset-heading">
+          <h2 id="reset-heading">Start fresh</h2>
+          <p>Reset all preferences in this browser, including taskbar position, background image and fit, desktop icon positions, saved window layouts, and Snake high score. Open apps will close and the default desktop will return. This cannot be undone.</p>
+          <!-- TODO: Add separate resets for Workspace, Appearance and window layouts so other preferences can be kept. -->
+          <button type="button" class="button settings-reset" onclick="openResetConfirmation()">Reset desktop…</button>
+        </section>
+      </div>
+    </div>
+    <div class="app-content resizable y" id="notes">
+      <div class="topBar bg-y">
+        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button><button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
+        <div class="title-bar">Notes</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
+      </div>
+      <div class="notes-app">
+        <div class="notes-actions">
+          <button id="note-new-document" type="button">+ Document</button>
+          <button id="note-new-sticky" type="button">+ Sticky note</button>
+          <button id="note-undo" type="button" hidden>Undo delete</button>
+        </div>
+        <p id="notes-status" role="status" aria-live="polite">Saved in this browser. Export a copy to keep a backup.</p>
+        <details class="notes-configuration">
+          <summary>Notes settings</summary>
+          <label><input id="notes-widget-enabled" type="checkbox"> Show the desktop quick-note widget</label>
+          <p>Click the widget to create a sticky note, or drag it to another spot. New sticky titles use your browser’s local date and time.</p>
+        </details>
+        <div class="notes-workspace">
+          <aside class="notes-library" aria-label="Find notes">
+            <label for="notes-search">Search notes</label>
+            <input id="notes-search" type="search" placeholder="Title or content…">
+            <label for="notes-filter">Show</label>
+            <select id="notes-filter">
+              <option value="all">All notes</option>
+              <option value="document">Documents</option>
+              <option value="sticky">Sticky notes</option>
+            </select>
+            <p id="notes-results" role="status" aria-live="polite"></p>
+            <nav id="notes-list" aria-label="Your notes"></nav>
+          </aside>
+          <section class="note-detail" aria-label="Note editor">
+            <div id="notes-empty"><h2>A place for your thoughts</h2><p>Create a document for longer writing, or pin a sticky note to your desktop.</p></div>
+            <div id="note-editor" hidden>
+              <label class="note-title-label" for="note-title">Title</label>
+              <input id="note-title" type="text" placeholder="Untitled note" maxlength="160">
+              <div class="note-options">
+                <label>Format <select id="note-kind"><option value="document">Document</option><option value="sticky">Sticky note</option></select></label>
+                <label id="note-color-label">Colour <select id="note-color"><option value="yellow">Yellow</option><option value="pink">Pink</option><option value="blue">Blue</option><option value="green">Green</option></select></label>
+                <label id="note-pin-label"><input id="note-pin" type="checkbox"> Pin to desktop</label>
+              </div>
+              <div class="note-toolbar" role="group" aria-label="Markdown formatting">
+                <button type="button" data-markdown="heading" title="Heading">H</button>
+                <button type="button" data-markdown="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+                <button type="button" data-markdown="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+                <button type="button" data-markdown="list" title="Bullet list">• List</button>
+                <button type="button" data-markdown="code" title="Code">&lt;/&gt;</button>
+                <button type="button" data-markdown="link" title="Link">Link</button>
+                <button id="note-preview-toggle" type="button" aria-pressed="false">Preview</button>
+              </div>
+              <label class="note-title-label" for="note-body">Markdown text</label>
+              <textarea id="note-body" spellcheck="true" placeholder="Start writing… Markdown is supported."></textarea>
+              <article id="note-preview" class="markdown-content" aria-label="Markdown preview" hidden></article>
+              <details class="markdown-help"><summary>Markdown guide</summary><p># Heading · **bold** · *italic* · ~~strikethrough~~ · - list · 1. numbered list · - [ ] task · &gt; quote · [link](https://example.com) · &#96;code&#96;. Use three backticks on separate lines for a code block. HTML is shown as text.</p></details>
+              <div class="note-footer"><button id="note-export" type="button">Export .md</button><button id="note-delete" type="button">Delete note</button></div>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
     <div id="snap-suggestion"></div>
   </div>
 
+  <dialog id="reset-confirmation" class="reset-dialog" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-description">
+    <form method="dialog">
+      <h2 id="reset-dialog-title">Reset all desktop preferences?</h2>
+      <p id="reset-dialog-description">You will lose the following saved data in this browser. This cannot be undone.</p>
+      <ul>
+        <li>Taskbar position and other preferences</li>
+        <li>Background image and image fit</li>
+        <li>Desktop icon positions</li>
+        <li>Window sizes, positions, and open or minimised state</li>
+        <li>Snake high score</li>
+      </ul>
+      <p>Open apps will close and the default desktop will return. Your notes are kept.</p>
+      <div class="reset-dialog-actions">
+        <button type="submit" class="reset-cancel" autofocus>Keep my preferences</button>
+        <button type="button" class="button settings-reset" onclick="confirmDesktopReset()">Reset all preferences</button>
+      </div>
+    </form>
+  </dialog>
 </body>
+<script src="js/desktop.js"></script>
+<script src="js/window-layout.js"></script>
+<script src="js/style-settings.js"></script>
+<script src="js/notes-markdown.js"></script>
+<script src="js/notes.js"></script>
 <script src="js/script.js"></script>
 <script src="js/snake.js"></script>
 

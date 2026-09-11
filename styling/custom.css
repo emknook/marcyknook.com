@@ -36,22 +36,25 @@ body {
 }
 
 .window {
-  flex: 1;
+  position: relative;
+  width: 100%;
+  height: calc(100dvh - 64px);
 }
 
 .desktop-icons {
-  position: fixed;
-  top: 20px;
-  left: 72px;
+  position: absolute;
+  inset: 0;
   z-index: 0;
-  display: grid;
-  grid-template-columns: 96px;
-  gap: 16px;
+  pointer-events: none;
 }
 
 .desktop-icon {
   --app-color: white;
 
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
   appearance: none;
   width: 96px;
   padding: 4px;
@@ -71,8 +74,9 @@ body {
   outline: none;
 }
 
-.desktop-icon:active {
-  transform: translateY(1px);
+.desktop-icon.is-dragging {
+  cursor: grabbing;
+  z-index: 1;
 }
 
 .desktop-icon.m {
@@ -137,7 +141,7 @@ body {
 }
 
 #snap-suggestion {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   background-color: rgba(170, 170, 170, 0.3);
@@ -151,15 +155,19 @@ body {
 }
 
 .nav-pane {
-  top: 0;
+  position: fixed;
+  bottom: 0;
   left: 0;
-  height: 100%;
-  width: auto;
-  background-color: transparent;
+  right: 0;
+  height: 64px;
+  box-sizing: border-box;
+  background: #191919;
+  border-top: 2px solid #444;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  z-index: 1000;
+  gap: 8px;
+  z-index: 2147483647;
 }
 
 .snake canvas {
@@ -168,36 +176,58 @@ body {
 }
 
 .nav-item {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 20px;
-  background-color: black;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  background: #111;
   color: white;
-  border-top: 2px solid;
-  border-bottom: 2px solid;
-  border-right: 2px solid;
-  border-radius: 0 10px 10px 0;
+  border: 2px solid;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   cursor: pointer;
-  overflow: hidden;
-  transition: width 0.3s ease;
   position: relative;
-  left: 0;
-  border-color: white;
-  transition: background-color 0.5s ease;
+  font: inherit;
 }
 
-.nav-item:hover {
-  width: 210px;
-  /* fallback for firefox & other not-calc-size supporting browsers */
-  transition: width 0.3s ease;
-  width: calc-size(auto, size);
+.style-settings {
+  display: grid;
+  gap: 10px;
+  margin: 8px 12px 20px 0;
+  padding: 16px;
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.style-settings legend { padding: 0 8px; }
+.style-settings input { min-width: 0; max-width: 100%; }
+.style-settings select,
+.style-settings button,
+.style-settings input::file-selector-button {
+  font: inherit;
+  background: #111;
+  color: white;
+  border: 1px solid #777;
+  border-radius: 4px;
+  padding: 8px;
+  max-width: 100%;
+}
+.style-settings button { justify-self: start; cursor: pointer; }
+.style-settings button:disabled { opacity: 0.5; cursor: default; }
+.style-settings :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.setting-hint { color: #ccc; font-size: 0.9rem; margin: 0; overflow-wrap: anywhere; }
+
+.nav-item[hidden] { display: none; }
+
+.nav-item:hover, .nav-item:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
 .nav-item .icon {
-  margin-right: 5px;
+  margin: 0;
 }
 
 .icon {
@@ -219,15 +249,12 @@ body {
 }
 
 .nav-item .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   white-space: nowrap;
-  opacity: 0;
-  margin-left: 10px;
-  transition: opacity 0.3s ease;
-  padding-right: 10px;
-  font-family: "Jersey 10", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-  font-size: 2rem;
 }
 
 .nav-item:hover .label {
@@ -243,6 +270,7 @@ body {
 }
 
 .app-content {
+  box-sizing: border-box;
   border: var(--border-size) solid;
   position: absolute;
   height: 200px;
@@ -253,8 +281,8 @@ body {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   font-size: 1.2rem;
   max-height: 0;
-  min-height: 10vh;
-  min-width: 10vw;
+  min-height: 0;
+  min-width: 0;
   transition: max-height 0.5s ease;
   border-color: white;
   overflow: hidden;
@@ -342,7 +370,7 @@ body {
 }
 
 .app-content.show {
-  max-height: 100vh;
+  max-height: 100%;
   display: block;
 }
 
@@ -479,6 +507,12 @@ body {
   color: #d2d2d2;
   font-size: clamp(0.9rem, 2vw, 1.05rem);
   line-height: 1.4;
+}
+
+.project-caption .project-meta {
+  margin: 0 0 10px;
+  color: var(--carousel-accent);
+  font-size: 0.9rem;
 }
 
 .carousel-controls {
@@ -646,3 +680,105 @@ body {
 .m {
   border-color: var(--magenta);
 }
+/* Keep the desktop and snapped windows clear of the selected taskbar edge. */
+body[data-taskbar-position="top"] .window { margin-top: 64px; }
+body[data-taskbar-position="left"] .window,
+body[data-taskbar-position="right"] .window {
+  width: calc(100% - 64px);
+  height: 100dvh;
+}
+body[data-taskbar-position="left"] .window { margin-left: 64px; }
+body[data-taskbar-position="top"] .nav-pane { top: 0; bottom: auto; border-top: 0; border-bottom: 2px solid #444; }
+body[data-taskbar-position="left"] .nav-pane,
+body[data-taskbar-position="right"] .nav-pane {
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  height: 100dvh;
+  flex-direction: column;
+  border-top: 0;
+}
+body[data-taskbar-position="left"] .nav-pane { right: auto; border-right: 2px solid #444; }
+body[data-taskbar-position="right"] .nav-pane { left: auto; border-left: 2px solid #444; }
+.taskbar-setting { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 10px 16px 0; }
+.taskbar-setting select { font: inherit; background: #111; color: white; border: 1px solid var(--blue); border-radius: 4px; padding: 6px; }
+.settings-reset {
+  font: inherit;
+  background: #48191f;
+  color: #fff;
+  border: 1px solid var(--red);
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+  width: auto;
+}
+.settings-reset:hover { background: #70212b; }
+.settings-reset:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.taskbar-setting select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.settings-intro,
+.settings-section { margin: 0 12px 20px 0; }
+.settings-intro h1 { font-family: "Jersey 10", sans-serif; font-size: 2rem; font-weight: 400; margin: 0 0 8px; }
+.settings-intro p,
+.settings-section p { line-height: 1.5; font-size: 0.95rem; }
+.settings-section h2 { font-size: 1.15rem; margin: 0 0 10px; }
+.settings-section .taskbar-setting { margin-top: 16px; }
+.saved-layouts { padding: 14px; border: 1px solid #555; border-radius: 8px; }
+.saved-layouts summary { cursor: pointer; }
+.saved-layouts > p { margin-top: 12px; }
+.settingsBlock { display: block; max-width: none; min-width: 0; margin-right: 0; }
+.settingsBlock h3 { margin: 0 0 6px; font-size: 1rem; }
+.settingsBlock p { margin: 4px 0 0; }
+.reset-section { border-top: 1px solid #79363f; padding-top: 18px; }
+.reset-section h2 { color: #ff929c; }
+.reset-section p { color: #ddd; }
+.reset-dialog {
+  box-sizing: border-box;
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--red);
+  border-radius: 12px;
+  background: #222;
+  color: white;
+  box-shadow: 0 16px 60px #0009;
+}
+.reset-dialog::backdrop { background: #000b; }
+.reset-dialog h2 { margin: 0 0 12px; color: #ff929c; font-size: 1.35rem; }
+.reset-dialog p,
+.reset-dialog li { line-height: 1.5; }
+.reset-dialog-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.reset-cancel { font: inherit; padding: 8px 12px; border: 1px solid var(--blue); border-radius: 4px; background: #111; color: white; cursor: pointer; }
+.reset-cancel:hover { background: #123238; }
+.reset-cancel:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.topBar { display: flex; align-items: center; }
+.topBar .title-bar { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topBar .resize-button,
+.topBar .fullsize-button,
+.minimize-button,
+.topBar .close-button {
+  flex: 0 0 28px;
+  height: 24px;
+  width: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: white;
+  font: 18px/24px sans-serif;
+  cursor: pointer;
+}
+.topBar .resize-button:hover,
+.topBar .fullsize-button:hover,
+.minimize-button:hover,
+.topBar .close-button:hover { background: rgba(0, 0, 0, 0.2); }
+.topBar .resize-button:focus-visible,
+.topBar .fullsize-button:focus-visible,
+.minimize-button:focus-visible,
+.topBar .close-button:focus-visible { outline: 2px solid white; outline-offset: -3px; }
+.nav-item.minimized .icon { opacity: 0.6; }
+.nav-item::after { content: ''; position: absolute; bottom: 3px; width: 12px; height: 2px; background: #aaa; }
+.nav-item.active::after { width: 22px; background: white; }
+
+.topBar .resize-button { cursor: nwse-resize; }
