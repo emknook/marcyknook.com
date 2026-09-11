@@ -594,18 +594,101 @@ function drawSnake() {
             tileSize - 2
         );
     });
+
+    drawSnakeEyes();
+}
+
+function drawSnakeEyes() {
+    const head = snake[snake.length - 1];
+    const direction = directions[currentDirection];
+
+    const centerX = (head.x + 0.5) * tileSize;
+    const centerY = (head.y + 0.5) * tileSize;
+
+    const perpendicular = {
+        x: -direction.y,
+        y: direction.x
+    };
+
+    const forwardOffset = tileSize * 0.22;
+    const sideOffset = tileSize * 0.2;
+    const eyeRadius = tileSize * 0.13;
+    const pupilRadius = tileSize * 0.055;
+    const pupilOffset = tileSize * 0.04;
+
+    [-1, 1].forEach(side => {
+        const eyeX =
+            centerX +
+            direction.x * forwardOffset +
+            perpendicular.x * sideOffset * side;
+
+        const eyeY =
+            centerY +
+            direction.y * forwardOffset +
+            perpendicular.y * sideOffset * side;
+
+        canvas.fillStyle = "white";
+        canvas.beginPath();
+        canvas.arc(
+            eyeX,
+            eyeY,
+            eyeRadius,
+            0,
+            Math.PI * 2
+        );
+        canvas.fill();
+
+        canvas.fillStyle = "black";
+        canvas.beginPath();
+        canvas.arc(
+            eyeX + direction.x * pupilOffset,
+            eyeY + direction.y * pupilOffset,
+            pupilRadius,
+            0,
+            Math.PI * 2
+        );
+        canvas.fill();
+    });
 }
 
 function drawBerries() {
-    canvas.fillStyle = "red";
-
     berries.forEach(berry => {
-        canvas.fillRect(
-            berry.x * tileSize,
-            berry.y * tileSize,
-            tileSize,
-            tileSize
+        const centerX = (berry.x + 0.5) * tileSize;
+        const centerY = (berry.y + 0.55) * tileSize;
+        const radius = tileSize * 0.34;
+
+        canvas.fillStyle = "red";
+        canvas.beginPath();
+        canvas.arc(
+            centerX,
+            centerY,
+            radius,
+            0,
+            Math.PI * 2
         );
+        canvas.fill();
+
+        canvas.save();
+        canvas.translate(
+            centerX + tileSize * 0.12,
+            centerY - tileSize * 0.34
+        );
+        canvas.rotate(-Math.PI / 4);
+
+        canvas.fillStyle = "green";
+        canvas.beginPath();
+        canvas.ellipse(
+            0,
+            0,
+            tileSize * 0.18,
+            tileSize * 0.09,
+            0,
+            0,
+            Math.PI * 2
+        );
+        canvas.fill();
+
+        canvas.restore();
     });
 }
 
