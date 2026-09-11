@@ -3,7 +3,9 @@ const desktopIcons = document.querySelectorAll(".desktop-icon");
 const appElements = document.querySelectorAll(".app-content");
 const topBars = document.querySelectorAll(".topBar");
 const snapOverlay = document.getElementById('snap-suggestion');
-const pinButton = document.querySelector('.pin');
+const autoplayButton = document.querySelector('.autoplay-toggle');
+const carouselDots = document.querySelector('.carousel-dots');
+const carouselStatus = document.querySelector('.carousel-status');
 const carousel = document.querySelector('.carousel');
 const windowMarginY = 30;
 const windowMarginX = 50;
@@ -538,52 +540,136 @@ function handleSnappingZone(e, x, y) {
     }
 }
 
-function updateSlidePosition() {
-    track.style.transform = 'translateX(-' + currentSlide * 100 + '%)';
+function updateSlidePosition({ announce = true } = {}) {
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+    slides.forEach((slide, index) => {
+        const isActive = index === currentSlide;
+        slide.setAttribute('aria-hidden', String(!isActive));
+        slide.querySelectorAll('iframe').forEach(frame => {
+            frame.tabIndex = isActive ? 0 : -1;
+        });
+    });
+
+    carouselDots.querySelectorAll('.carousel-dot').forEach((dot, index) => {
+        const isActive = index === currentSlide;
+        dot.classList.toggle('is-active', isActive);
+        dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+    });
+
+    if (announce) {
+        carouselStatus.textContent = `Project ${currentSlide + 1} of ${slides.length}`;
+    }
+}
+
+function goToSlide(index, options) {
+    currentSlide = (index + slides.length) % slides.length;
+    updateSlidePosition(options);
 }
 
 function goToNextSlide() {
-    currentSlide = (currentSlide + 1) % slides.length;
-    updateSlidePosition();
+    goToSlide(currentSlide + 1);
 }
 
 function goToPrevSlide() {
-    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-    updateSlidePosition();
-}
-
-function startAutoplay() {
-    autoplayInterval = setInterval(goToNextSlide, 3000);
+    goToSlide(currentSlide - 1);
 }
 
 function stopAutoplay() {
     clearInterval(autoplayInterval);
+    autoplayInterval = null;
 }
 
-function resizeHandler() {
-    snapZones.forEach(zone => {
+function startAutoplay() {
+    stopAutoplay();
 
+    if (!isAutoplay || document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+    }
+
+    autoplayInterval = setInterval(() => {
+        goToSlide(currentSlide + 1, { announce: false });
+    }, 6500);
+}
+
+function updateAutoplayButton() {
+    autoplayButton.setAttribute('aria-pressed', String(!isAutoplay));
+    autoplayButton.setAttribute('aria-label', isAutoplay ? 'Pause automatic slides' : 'Play automatic slides');
+    autoplayButton.innerHTML = isAutoplay
+        ? '<i class="fa-solid fa-pause" aria-hidden="true"></i>'
+        : '<i class="fa-solid fa-play" aria-hidden="true"></i>';
+}
+
+slides.forEach((_, index) => {
+    const dot = document.createElement('button');
+    dot.className = 'carousel-dot';
+    dot.type = 'button';
+    dot.setAttribute('aria-label', `Show project ${index + 1}`);
+    dot.addEventListener('click', () => {
+        goToSlide(index);
+        startAutoplay();
     });
-}
-
-document.addEventListener('resize', resizeHandler);
-
-// Button events
-nextButton.addEventListener('click', goToNextSlide);
-prevButton.addEventListener('click', goToPrevSlide);
-
-// Pause on hover
-carousel.addEventListener('mouseenter', stopAutoplay);
-carousel.addEventListener('mouseleave', () => {
-    if (isAutoplay) startAutoplay();
+    carouselDots.appendChild(dot);
 });
 
-// Pin toggle
-pinButton.addEventListener('click', () => {
+nextButton.addEventListener('click', () => {
+    goToNextSlide();
+    startAutoplay();
+});
+
+prevButton.addEventListener('click', () => {
+    goToPrevSlide();
+    startAutoplay();
+});
+
+autoplayButton.addEventListener('click', () => {
     isAutoplay = !isAutoplay;
-    pinButton.innerHTML = isAutoplay ? '<i class="fa-solid fa-thumbtack-slash"></i>' : '<i class="fa-solid fa-thumbtack"></i>';
+    updateAutoplayButton();
     isAutoplay ? startAutoplay() : stopAutoplay();
 });
 
-// Start autoplay on load
+carousel.tabIndex = 0;
+carousel.addEventListener('keydown', event => {
+    if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goToNextSlide();
+        startAutoplay();
+    }
+
+    if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goToPrevSlide();
+        startAutoplay();
+    }
+});
+
+carousel.addEventListener('mouseenter', stopAutoplay);
+carousel.addEventListener('mouseleave', startAutoplay);
+carousel.addEventListener('focusin', stopAutoplay);
+carousel.addEventListener('focusout', event => {
+    if (!carousel.contains(event.relatedTarget)) startAutoplay();
+});
+
+let touchStartX = 0;
+carousel.addEventListener('touchstart', event => {
+    touchStartX = event.changedTouches[0].clientX;
+    stopAutoplay();
+}, { passive: true });
+
+carousel.addEventListener('touchend', event => {
+    const distance = event.changedTouches[0].clientX - touchStartX;
+
+    if (Math.abs(distance) > 50) {
+        distance < 0 ? goToNextSlide() : goToPrevSlide();
+    }
+
+    startAutoplay();
+}, { passive: true });
+
+document.addEventListener('visibilitychange', () => {
+    document.hidden ? stopAutoplay() : startAutoplay();
+});
+
+updateSlidePosition({ announce: false });
+updateAutoplayButton();
 startAutoplay();
