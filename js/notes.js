@@ -11,8 +11,10 @@ function saveNotes() {
         if (!notesStorageReady) throw new Error('Existing notes could not be read');
         localStorage.setItem(notesStorageKey, JSON.stringify(notesData));
         noteElement('notes-status').textContent = 'Saved in this browser · Export a copy for a backup.';
+        return true;
     } catch {
         noteElement('notes-status').textContent = 'Not saved: browser storage is unavailable or full. Export your work before leaving.';
+        return false;
     }
 }
 
@@ -21,6 +23,7 @@ function normalizeNote(note) {
     return { id: note.id, title: typeof note.title === 'string' ? note.title : '', body: note.body,
         kind: note.kind === 'sticky' ? 'sticky' : 'document', pinned: !!note.pinned,
         color: noteColors.includes(note.color) ? note.color : 'yellow',
+        italic: !!note.italic,
         stackOrder: Number.isFinite(note.stackOrder) ? note.stackOrder : 0,
         x: Number.isFinite(note.x) ? Math.max(0, Math.min(100, note.x)) : 35,
         y: Number.isFinite(note.y) ? Math.max(0, Math.min(100, note.y)) : 12 };
@@ -99,7 +102,7 @@ function initializeNotes() {
     renderNotes();
 }
 
-function createNote(kind) {
+function createNote(kind, onDesktop = false) {
     noteElement('notes-search').value = '';
     noteElement('notes-filter').value = 'all';
     const note = { id: crypto.randomUUID(), title: kind === 'sticky' ? new Date().toLocaleString() : '', body: '', kind, pinned: kind === 'sticky',
@@ -108,7 +111,11 @@ function createNote(kind) {
     notesData.items.push(note);
     notesData.activeId = note.id;
     notesPreview = false;
-    saveNotes(); renderNotes(); noteElement('note-title').focus();
+    saveNotes(); renderNotes();
+    if (onDesktop) {
+        const card = [...noteElement('sticky-board').children].find(item => item.dataset.noteId === note.id);
+        card?.querySelector('textarea')?.focus();
+    } else noteElement('note-title').focus();
 }
 
 function positionNotesWidget() {
@@ -130,9 +137,7 @@ function initializeNotesWidget() {
     });
     widget.addEventListener('click', () => {
         if (Date.now() < suppressClickUntil) return;
-        openApp('notes', true);
-        createNote('sticky');
-        noteElement('note-body').focus();
+        createNote('sticky', true);
     });
     widget.addEventListener('pointerdown', event => {
         if (event.button !== 0 || !event.isPrimary) return;
@@ -214,8 +219,14 @@ function renderNoteEditor() {
     noteElement('note-pin').checked = note.pinned;
     noteElement('note-pin-label').hidden = note.kind !== 'sticky';
     noteElement('note-color-label').hidden = note.kind !== 'sticky';
-    noteElement('note-body').hidden = notesPreview;
-    noteElement('note-preview').hidden = !notesPreview;
+    const sticky = note.kind === 'sticky';
+    document.querySelector('.note-toolbar').hidden = sticky;
+    document.querySelector('.markdown-help').hidden = sticky;
+    document.querySelector('label[for="note-body"]').textContent = sticky ? 'Plain text' : 'Markdown text';
+    noteElement('note-export').textContent = sticky ? 'Export .txt' : 'Export .md';
+    noteElement('note-body').style.fontStyle = sticky && note.italic ? 'italic' : 'normal';
+    noteElement('note-body').hidden = notesPreview && !sticky;
+    noteElement('note-preview').hidden = !notesPreview || sticky;
     noteElement('note-preview').innerHTML = renderNoteMarkdown(note.body);
     noteElement('note-preview-toggle').textContent = notesPreview ? 'Edit Markdown' : 'Preview';
     noteElement('note-preview-toggle').setAttribute('aria-pressed', String(notesPreview));
@@ -230,7 +241,7 @@ function updateNoteFromEditor() {
 }
 
 function insertNoteMarkdown(format) {
-    if (!activeNote()) return;
+    if (!activeNote() || activeNote().kind === 'sticky') return;
     if (notesPreview) { notesPreview = false; renderNoteEditor(); }
     const editor = noteElement('note-body');
     const start = editor.selectionStart, end = editor.selectionEnd;
@@ -251,7 +262,7 @@ function exportNote() {
     const url = URL.createObjectURL(new Blob([note.body], { type: 'text/markdown;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = (note.title.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') || 'Untitled note') + '.md';
+    link.download = (note.title.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') || 'Untitled note') + (note.kind === 'sticky' ? '.txt' : '.md');
     document.body.append(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -284,17 +295,53 @@ function renderStickyNotes() {
         card.style.left = `clamp(0px, ${note.x}%, max(0px, calc(100% - 240px)))`;
         card.style.top = `clamp(0px, ${note.y}%, max(0px, calc(100% - 200px)))`;
         const header = document.createElement('div'); header.className = 'sticky-header';
-        const title = document.createElement('strong'); title.textContent = note.title.trim() || 'Untitled note';
-        const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = 'Edit';
-        edit.setAttribute('aria-label', 'Edit ' + title.textContent);
-        edit.addEventListener('click', () => { notesData.activeId = note.id; notesPreview = false; openApp('notes', true); saveNotes(); renderNotes(); noteElement('note-body').focus(); });
-        header.append(title, edit);
-        const content = document.createElement('div'); content.className = 'sticky-content markdown-content';
-        content.innerHTML = renderNoteMarkdown(note.body) || '<p>Use Edit to start writing.</p>';
-        card.append(header, content); board.append(card);
+        const grip = document.createElement('span'); grip.textContent = '⠿'; grip.title = 'Drag sticky note';
+        const title = document.createElement('input'); title.value = note.title;
+        title.setAttribute('aria-label', 'Sticky note title'); title.maxLength = 160;
+        const tools = document.createElement('div'); tools.className = 'sticky-tools';
+        const italic = document.createElement('button'); italic.type = 'button'; italic.textContent = 'Italic';
+        italic.setAttribute('aria-pressed', String(!!note.italic));
+        const bullet = document.createElement('button'); bullet.type = 'button'; bullet.textContent = '• List';
+        const status = document.createElement('span'); status.className = 'sticky-save-status'; status.setAttribute('role', 'status');
+        const content = document.createElement('textarea'); content.className = 'sticky-body';
+        content.value = note.body; content.placeholder = 'Click and start typing…';
+        content.setAttribute('aria-label', 'Sticky note text'); content.style.fontStyle = note.italic ? 'italic' : 'normal';
+        const persist = () => {
+            note.title = title.value; note.body = content.value;
+            status.textContent = saveNotes() ? 'Saved' : 'Not saved — storage full';
+            renderNoteList();
+            if (notesData.activeId === note.id) renderNoteEditor();
+        };
+        title.addEventListener('input', persist); content.addEventListener('input', persist);
+        italic.addEventListener('click', () => {
+            note.italic = !note.italic; italic.setAttribute('aria-pressed', String(note.italic));
+            content.style.fontStyle = note.italic ? 'italic' : 'normal'; persist(); content.focus();
+        });
+        bullet.addEventListener('click', () => {
+            const start = content.value.lastIndexOf('\n', content.selectionStart - 1) + 1;
+            content.setRangeText('• ', start, start, 'end'); persist(); content.focus();
+        });
+        const unpin = document.createElement('button');
+        unpin.type = 'button'; unpin.className = 'sticky-unpin';
+        unpin.textContent = 'Unpin'; unpin.title = 'Hide from desktop';
+        unpin.setAttribute('aria-label', 'Hide sticky note from desktop');
+        unpin.addEventListener('click', event => {
+            event.stopPropagation();
+            note.pinned = false;
+            if (!saveNotes()) {
+                note.pinned = true;
+                status.textContent = 'Could not save — try again';
+                return;
+            }
+            renderNoteList();
+            if (notesData.activeId === note.id) renderNoteEditor();
+            card.remove();
+        });
+        header.append(grip, title, unpin); tools.append(italic, bullet, status);
+        card.append(header, content, tools); board.append(card);
         let drag = null;
         header.addEventListener('pointerdown', event => {
-            if (event.button !== 0 || !event.isPrimary || event.target.closest('button')) return;
+            if (event.button !== 0 || !event.isPrimary || event.target.closest('button, input, textarea')) return;
             drag = { id: event.pointerId, x: event.clientX, y: event.clientY, left: card.offsetLeft, top: card.offsetTop };
             header.setPointerCapture(event.pointerId);
         });

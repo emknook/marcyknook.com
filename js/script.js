@@ -26,9 +26,11 @@ let currentlyDragging;
 let currentlyClosing = false;
 let suggestion = '';
 let isSuggesting = false;
+let snapPreviewTimer = null;
 let snapArea = '';
 let currentSlide = 0;
 let settings = {};
+let settingsStorageReadable = true;
 let isAutoplay = true;
 let autoplayInterval;
 
@@ -56,18 +58,61 @@ function snapWindowToZone(el, zoneName) {
     saveSettings();
 }
 
-function resetSettings() {
-    resetBackground();
-    settings = {
+function createDefaultSettings() {
+    return {
         theme: 'dark',
         fontSize: 'large',
         openApps: ['app0'],
         appSettings: [],
         desktopPositions: {},
         taskbarPosition: 'left',
+        iconPlacement: 'grid',
+        desktopLayoutVersion: 2,
         highestZ: "1"
     };
+}
+
+function readSettings() {
+    settingsStorageReadable = true;
+    try {
+        const raw = localStorage.getItem('userSettings');
+        if (raw === null) return createDefaultSettings();
+        const saved = JSON.parse(raw);
+        const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+        if (!isRecord(saved) || !Array.isArray(saved.openApps)
+            || !saved.openApps.every(id => typeof id === 'string')
+            || (saved.appSettings !== undefined && (!Array.isArray(saved.appSettings)
+                || !saved.appSettings.every(app => isRecord(app) && typeof app.name === 'string')))
+            || (saved.desktopPositions !== undefined && !isRecord(saved.desktopPositions))) {
+            throw new Error('Invalid desktop settings');
+        }
+        const appIds = new Set([...appElements].map(app => app.id));
+        const restored = { ...createDefaultSettings(), ...saved };
+        restored.openApps = [...new Set(saved.openApps.filter(id => appIds.has(id)))];
+        restored.appSettings = (saved.appSettings ?? []).filter(app => appIds.has(app.name));
+        const highestZ = Number(restored.highestZ);
+        restored.highestZ = Number.isFinite(highestZ) && highestZ >= 1 ? highestZ : 1;
+        return restored;
+    } catch {
+        // Preserve unreadable data until the user explicitly resets preferences.
+        settingsStorageReadable = false;
+        showSettingsStorageStatus('Saved desktop preferences could not be read. Using temporary defaults; changes will not be saved. Reset desktop preferences to try saving again.');
+        return createDefaultSettings();
+    }
+}
+
+function showSettingsStorageStatus(message) {
+    const status = document.getElementById('settings-storage-status');
+    status.textContent = message;
+    status.hidden = !message;
+}
+
+function resetSettings() {
+    settingsStorageReadable = true;
+    resetBackground();
+    settings = createDefaultSettings();
     applyBackgroundFit();
+    document.getElementById('icon-placement').value = 'grid';
     appElements.forEach(app => {
         closeApp(app.id)
     });
@@ -293,7 +338,9 @@ function onDrag(x, y) {
 function clearSnapPreview() {
     isSuggesting = false;
     snapArea = null;
-    snapOverlay.style.display = 'none';
+    clearTimeout(snapPreviewTimer);
+    snapPreviewTimer = null;
+    snapOverlay.classList.remove('visible');
 }
 
 function cancelDrag() {
@@ -330,20 +377,10 @@ function loadSettings() {
         stopResize();
     });
 
-    const loadedSettings = localStorage.getItem('userSettings');
-    if (loadedSettings) {
-        settings = JSON.parse(loadedSettings);
-        if (!settings.openApps) {
-            resetSettings();
-        }
-        applyTaskbarPosition();
-        migrateWindowLayouts();
-        settings.openApps.forEach(e => {
-            openApp(e, false);
-        });
-    } else {
-        resetSettings();
-    }
+    settings = readSettings();
+    applyTaskbarPosition();
+    migrateWindowLayouts();
+    settings.openApps.forEach(id => openApp(id, false));
 
     appElements.forEach(app => {
         app.addEventListener('mousedown', () => {
@@ -351,32 +388,6 @@ function loadSettings() {
         });
     });
 
-    const resizeButtons = document.querySelectorAll('.resize-button');
-    resizeButtons.forEach(button => {
-        button.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            startResize(e.currentTarget.parentElement.parentElement, e.clientX, e.clientY, 'nw');
-        });
-        button.addEventListener('touchstart', function (e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            startResize(e.currentTarget.parentElement.parentElement, touch.clientX, touch.clientY, 'nw');
-        });
-    });
-
-    document.querySelectorAll('.resize-button').forEach(button => {
-        button.addEventListener('keydown', event => {
-            const movement = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[event.key];
-            if (!movement) return;
-            event.preventDefault();
-            event.stopPropagation();
-            const app = button.closest('.app-content');
-            setHighest(app);
-            startResize(app, 0, 0, 'nw');
-            onResize(...movement);
-            stopResize();
-        });
-    });
     document.querySelectorAll('.fullsize-button').forEach(button => {
         button.addEventListener('click', event => {
             event.stopPropagation();
@@ -409,6 +420,7 @@ function loadSettings() {
         });
     });
 
+    initializeMusic();
     initializeNotes();
     initializeStyleSettings();
     initializeTaskbarSettings();
@@ -458,8 +470,16 @@ function fillSettingBlocks() {
 function saveSettings() {
     syncTaskbar();
     syncWindowControls();
-    localStorage.setItem('userSettings', JSON.stringify(settings));
     fillSettingBlocks();
+    if (!settingsStorageReadable) return false;
+    try {
+        localStorage.setItem('userSettings', JSON.stringify(settings));
+        showSettingsStorageStatus('');
+        return true;
+    } catch {
+        showSettingsStorageStatus('Desktop changes are not saved because browser storage is full or unavailable. You can keep using this desktop, but changes may be lost when you leave.');
+        return false;
+    }
 }
 
 function updateApp(name, x, y, height, width, z) {
@@ -525,6 +545,7 @@ function openApp(targetId, forceHighest) {
 }
 
 function closeApp(targetId) {
+    if (targetId === 'music') stopMusicPlayback();
     const saved = getAppSettings(targetId);
     if (saved) saved.minimized = false;
     pauseHiddenApp(targetId);
@@ -604,7 +625,12 @@ function handleSnappingZone(e, x, y) {
         return;
     }
     isSuggesting = true;
-    snapOverlay.style.display = 'block';
+    if (!snapPreviewTimer && !snapOverlay.classList.contains('visible')) {
+        snapPreviewTimer = setTimeout(() => {
+            snapPreviewTimer = null;
+            if (isDragging && isSuggesting) snapOverlay.classList.add('visible');
+        }, 100);
+    }
     snapOverlay.style.left = (zone.x * winWidth) + 'px';
     snapOverlay.style.top = (zone.y * winHeight) + 'px';
     snapOverlay.style.width = (zone.width * winWidth) + 'px';

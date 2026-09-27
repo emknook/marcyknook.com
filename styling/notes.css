@@ -68,8 +68,17 @@
 .sticky-header strong { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95rem; }
 .sticky-header button { border: 1px solid #0005; border-radius: 4px; background: transparent; color: inherit; padding: 3px 6px; cursor: pointer; }
 .sticky-header button:focus-visible { outline: 2px solid #333; }
+.sticky-header .sticky-unpin { flex-shrink: 0; font: 11px sans-serif; padding: 4px 5px; }
+.sticky-header .sticky-unpin:hover { background: #0002; }
 .sticky-content { height: calc(100% - 47px); overflow: auto; box-sizing: border-box; padding: 4px 12px 12px; font-size: 0.9rem; }
 .sticky-content a { color: #17417a; }
+.sticky-header input { width: 100%; min-width: 0; background: transparent; border: 0; color: inherit; font: bold 0.9rem sans-serif; padding: 3px; }
+.sticky-body { box-sizing: border-box; display: block; width: 100%; height: calc(100% - 72px); resize: none; border: 0; background: transparent; color: inherit; padding: 8px 12px; font: 0.95rem/1.45 sans-serif; }
+.sticky-body:focus, .sticky-header input:focus { outline: 2px solid #0005; outline-offset: -2px; }
+.sticky-tools { display: flex; align-items: center; gap: 5px; padding: 3px 8px; }
+.sticky-tools button { background: transparent; color: inherit; border: 1px solid #0005; border-radius: 4px; padding: 2px 5px; cursor: pointer; }
+.sticky-tools button[aria-pressed="true"] { background: #0002; }
+.sticky-save-status { font: 10px sans-serif; margin-left: auto; }
 @container (max-width: 540px) {
   .notes-workspace { grid-template-columns: minmax(0, 1fr); }
   #notes-list { flex-direction: row; max-height: 100px; }

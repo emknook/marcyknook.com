@@ -2,27 +2,33 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Marcy Knook</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styling/custom.css">
   <link rel="stylesheet" href="styling/notes.css">
+  <link rel="stylesheet" href="styling/music.css">
+  <link rel="stylesheet" href="styling/blog.css">
   <link rel="icon" type="image/x-icon" href="/images/favicon.png">
   <script src="https://kit.fontawesome.com/05c6f67ee8.js" crossorigin="anonymous"></script>
 </head>
 
 <body data-taskbar-position="left" onload="loadSettings()">
   <nav class="nav-pane" aria-label="Open applications">
+    <button type="button" class="nav-item b" data-target="blog" hidden>
+      <span class="label">Blog &amp; Posts</span>
+      <span class="icon" aria-hidden="true">&#128240;</span>
+    </button>
     <button type="button" class="nav-item m" data-target="app0" hidden>
       <span class="label">About Marcy</span>
       <span class="icon">🏠</span>
     </button>
     <button type="button" class="nav-item y" data-target="app1" hidden>
       <span class="label">Tools &amp; Skills</span>
-      <span class="icon">🏃‍♀️‍➡️</span>
+      <span class="icon">🧰</span>
     </button>
     <button type="button" class="nav-item r" data-target="app2" hidden>
       <span class="label">Project Gallery</span>
@@ -39,6 +45,7 @@
     <button type="button" class="nav-item y" data-target="notes" hidden>
       <span class="label">Notes</span><span class="icon">📝</span>
     </button>
+    <button type="button" class="nav-item p" data-target="music" hidden><span class="label">Music Quiz</span><span class="icon">🎵</span></button>
   </nav>
   <div class="window">
     <nav class="desktop-icons" aria-label="Desktop applications">
@@ -47,7 +54,7 @@
         <span class="desktop-icon-label">About Marcy</span>
       </button>
       <button class="desktop-icon y" type="button" data-target="app1">
-        <span class="desktop-icon-image" aria-hidden="true">🏃‍♀️‍➡️</span>
+        <span class="desktop-icon-image" aria-hidden="true">🧰</span>
         <span class="desktop-icon-label">Tools &amp; Skills</span>
       </button>
       <button class="desktop-icon r" type="button" data-target="app2">
@@ -66,42 +73,72 @@
         <span class="desktop-icon-image" aria-hidden="true">📝</span>
         <span class="desktop-icon-label">Notes</span>
       </button>
+      <button class="desktop-icon p" type="button" data-target="music"><span class="desktop-icon-image" aria-hidden="true">🎵</span><span class="desktop-icon-label">Music Quiz</span></button>
+      <button class="desktop-icon b" type="button" data-target="blog">
+        <span class="desktop-icon-image" aria-hidden="true">&#128240;</span>
+        <span class="desktop-icon-label">Blog &amp; Posts</span>
+      </button>
     </nav>
+    <section class="app-content resizable b" id="blog" aria-labelledby="blog-window-title">
+      <div class="topBar bg-b">
+        <div class="title-bar" id="blog-window-title">Blog &amp; Posts</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">&#8722;</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">&#9633;</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">&#215;</button>
+      </div>
+      <div class="scrollwrapper">
+        <div class="blog-content">
+          <header class="blog-intro">
+            <p class="blog-eyebrow">Marcy's development journal</p>
+            <h1>Blog &amp; Posts</h1>
+            <p>Reflections on what I'm learning, building and improving along the way.</p>
+          </header>
+          <article class="blog-post" aria-labelledby="learning-with-codex-title">
+            <header>
+              <p class="blog-eyebrow">Development process &middot; AI tools</p>
+              <h2 id="learning-with-codex-title">Learning to develop with Codex</h2>
+              <p class="blog-byline">By Marcy Knook &middot; <time datetime="2026-09-27">27 September 2026</time></p>
+            </header>
+            <p>These past few weeks, I've learnt to make more use of an LLM in my development process. I've connected Codex within my development environment and have been learning how to give it enough context and explain clearly what I want it to do. I've mainly been using it within my personal portfolio, where I can experiment without much risk if something goes wrong. So far, it has been useful and has not caused many problems, although I've noticed that the available usage goes faster than one might expect when using it for larger development tasks.</p>
+            <p>I'm learning this because it almost feels wrong not to. These tools are becoming more capable and more integrated into development workflows, and I think completely ignoring them could eventually mean falling behind. At the same time, I do not want to use Codex as something that simply writes code for me. I still need to understand and review what it produces.</p>
+            <p>Using Codex is also showing me that I still have a long way to go in consistently applying testing, code quality standards and a structured development process. If requirements or conventions are unclear, Codex can make assumptions that I need to catch during review.</p>
+            <p>I therefore see Codex mostly as another development tool. If I get better at giving it context, setting constraints and reviewing its output, I think it can improve both the speed and effectiveness with which we develop what customers need.</p>
+          </article>
+        </div>
+      </div>
+    </section>
     <section id="sticky-board" aria-label="Pinned sticky notes"></section>
     <button id="notes-widget" type="button" aria-label="Create a sticky note" title="Click to create a sticky note · Drag to move" hidden>📝 <span>+ Sticky note</span></button>
     <div class="app-content resizable m" id="app0">
       <div class="topBar bg-m">
-        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
-        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <div class="title-bar">About Marcy</div>
         <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
-      <div class="scrollwrapper" id="content">
+      <div class="scrollwrapper">
 
       </div>
     </div>
     <div class="app-content resizable y" id="app1">
       <div class="topBar bg-y">
-        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
-        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <div class="title-bar">Tools &amp; Skills</div>
         <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
-      <div class="scrollwrapper" id="content">
+      <div class="scrollwrapper">
         ":)"
       </div>
     </div>
     <div class="app-content resizable r" id="app2">
       <div class="topBar bg-r">
-        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
-        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <div class="title-bar">Project Gallery</div>
         <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
-      <div class="scrollwrapper" id="content">
+      <div class="scrollwrapper">
         <div class="links">
           <a href="https://github.com/emknook"><i class="fa-brands fa-github"></i></a>
         </div>
@@ -119,7 +156,7 @@
                   <span class="project-number">01</span>
                   <div>
                     <h2>Play Leads AYonder (PLAY)</h2>
-                    <p class="project-meta">2025 · HKU · Godot</p>
+                    <p class="project-meta">2025 · Godot</p>
                     <p>A small test project exploring <em>homo ludens</em>: the idea of humans as playful beings.
                       You are a bored office worker in a boring office, until a file on your computer starts
                       talking to you. Open it to enter a game world where you can play and gain powers.</p>
@@ -137,7 +174,7 @@
                   <span class="project-number">02</span>
                   <div>
                     <h2>Tree Painter</h2>
-                    <p class="project-meta">Around 2020 · Avans · Java</p>
+                    <p class="project-meta">Around 2020 · Java</p>
                     <p>An assignment focused on object-oriented programming and updating an app at a fixed
                       frame rate. I added a little character who could walk around and collect coins, just
                       for fun. The app also wrote to files to save its game state.</p>
@@ -183,28 +220,27 @@
     </div>
     <div class="app-content resizable g" id="snake">
       <div class="topBar bg-g">
-        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
-        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <div class="title-bar">Snake</div>
         <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
-      <div class="snake" id="content">
+      <div class="snake" id="snake-content">
         <div class="snake-score" id="snake-score">Highscore: 0</div>
       </div>
     </div>
     <div class="app-content resizable b" id="settings">
       <div class="topBar bg-b">
-        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button>
-        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <div class="title-bar">Desktop Settings</div>
         <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
-      <div class="scrollwrapper" id="content">
+      <div class="scrollwrapper">
         <header class="settings-intro">
           <h1>Make this desktop yours</h1>
           <p>Choose a background and arrange your workspace. Changes save automatically in this browser.</p>
+          <p id="settings-storage-status" role="status" hidden></p>
         </header>
         <section class="settings-section" aria-labelledby="workspace-heading">
           <h2 id="workspace-heading">Workspace</h2>
@@ -217,6 +253,11 @@
             <option value="top">Top</option>
           </select>
         </label>
+          <label class="taskbar-setting" for="icon-placement">App icon placement
+            <select id="icon-placement"><option value="grid">Snap to grid</option><option value="free">Free placement</option></select>
+          </label>
+          <button type="button" class="section-reset" onclick="resetIconPositions()">Reset app icon positions</button>
+          <button type="button" class="section-reset" onclick="resetTaskbarPosition()">Reset taskbar position</button>
         </section>
         <fieldset class="style-settings">
           <legend>Appearance</legend>
@@ -235,21 +276,20 @@
         <details class="settings-section saved-layouts">
           <summary>Saved window layouts</summary>
           <p class="setting-hint">Sizes and positions scale with the desktop, excluding the taskbar. Values below are rounded to whole percentages; your layout saves with up to six decimal places.</p>
+          <button type="button" class="section-reset" onclick="resetWindowLayouts()">Reset window layouts</button>
           <div id="appSettings" class="appSettings"></div>
         </details>
         <section class="settings-section reset-section" aria-labelledby="reset-heading">
           <h2 id="reset-heading">Start fresh</h2>
           <p>Reset all preferences in this browser, including taskbar position, background image and fit, desktop icon positions, saved window layouts, and Snake high score. Open apps will close and the default desktop will return. This cannot be undone.</p>
-          <!-- TODO: Add separate resets for Workspace, Appearance and window layouts so other preferences can be kept. -->
           <button type="button" class="button settings-reset" onclick="openResetConfirmation()">Reset desktop…</button>
         </section>
       </div>
     </div>
     <div class="app-content resizable y" id="notes">
-      <div class="topBar bg-y">
-        <button class="resize-button" type="button" aria-label="Resize window" title="Drag to resize; arrow keys when focused">⤢</button><button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
-        <div class="title-bar">Notes</div>
+      <div class="topBar bg-y"><div class="title-bar">Notes</div>
         <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
       </div>
       <div class="notes-app">
@@ -306,6 +346,101 @@
         </div>
       </div>
     </div>
+    <div class="app-content resizable p" id="music">
+      <div class="topBar bg-p">
+        <div class="title-bar">Music Quiz</div>
+        <button class="minimize-button" type="button" aria-label="Minimise window" title="Minimise">−</button>
+        <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">□</button>
+        <button class="close-button" type="button" aria-label="Close window" title="Close">×</button>
+      </div>
+      <div class="music-app">
+        <header><h1>What's that song?</h1><p>Scan or pick a song. Guess together, then reveal the artist, title and year.</p></header>
+        <p id="music-status" role="status" aria-live="polite"></p>
+        <section id="music-round" hidden aria-label="Guess this song">
+          <p class="music-eyebrow" id="music-round-step">Listen &amp; guess</p>
+          <h2 id="music-round-heading">What's that song?</h2>
+          <button id="music-reveal" class="music-primary" type="button">Reveal answer</button>
+          
+          <div id="music-next">
+            
+            <div class="music-row"><button id="music-next-scan" class="music-primary" type="button">Scan next card</button><button id="music-next-random" type="button">Next random song</button></div>
+          </div>
+          <div class="music-playback-controls"><button id="music-play" type="button">Play</button><button id="music-pause" type="button">Pause</button><button id="music-restart" type="button">Restart</button><button id="music-stop" type="button">Stop playback</button></div>
+          <p class="music-hint">No sound? Tap Play or try the YouTube player below. Ads may play first.</p>
+          <div id="music-answer" hidden aria-live="polite"></div><details id="music-player-details"><summary>Show YouTube player (may reveal the answer)</summary></details>
+          <div id="music-player-host" class="music-player-hidden"></div>
+        </section>
+        <div class="music-session-bar">
+          <label class="music-playlist-field" for="music-playlist"><span>Your playlist</span><select id="music-playlist"></select></label>
+          <div class="music-session-actions">
+            <button id="music-random" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3c5 0 7 10 12 10h3m-4-4 4 4-4 4M3 17h3c2 0 3-2 4-4m4-2c1-2 2-4 4-4h3m-4-4 4 4-4 4"/></svg>
+              Random song
+            </button>
+            <button id="music-scan" type="button">Scan card</button>
+          </div>
+        </div>
+        <p id="music-empty" class="music-hint">Have cards? Scan one to play. For random songs, <button id="music-setup" type="button">add or import a playlist</button>.</p>
+        <details id="music-scanner">
+          <summary>Scan a song card</summary>
+          <p class="music-hint">Point your camera at a Music Quiz card. It opens here, with the answer hidden. Images stay on your device.</p>
+          <div class="music-row"><button id="music-camera-start" type="button">Start camera</button><button id="music-camera-stop" type="button" hidden>Stop camera</button></div>
+          <video id="music-camera" muted playsinline hidden aria-label="QR scanner camera preview"></video>
+          <p id="music-scan-status" role="status" aria-live="polite"></p>
+          <label>Or scan a QR image<input id="music-qr-upload" type="file" accept="image/*"></label>
+        </details>
+        <details id="music-configuration">
+          <summary>Manage playlists &amp; QR cards</summary>
+          <p class="music-hint">Add songs, import playlists, back up your library or print cards for your next game.</p>
+        <details id="music-library">
+          <summary>Song library &amp; import</summary>
+          <p>Keep playlists in this browser, or export a JSON backup. Add a YouTube link for playback and QR cards.</p>
+          <form id="music-song-form">
+            <div class="music-fields">
+              <label>Song ID (optional)<input id="song-id" maxlength="80" placeholder="Generated if empty"></label>
+              <label>Artist / band<input id="song-artist" maxlength="160" required></label>
+              <label>Song title<input id="song-title" maxlength="200" required></label>
+              <label>Release year<input id="song-year" type="number" min="1000" max="9999" placeholder="Unknown"></label>
+              <label>YouTube link<input id="song-youtube" type="url" placeholder="https://www.youtube.com/watch?v=…"></label>
+              <label>Playlist<input id="song-playlist" maxlength="80" value="Main" required></label>
+            </div>
+            <button type="submit">Save song</button><button id="music-form-clear" type="button">Clear form</button>
+          </form>
+          <hr>
+          <label>Import CSV or JSON<input id="music-import" type="file" accept=".csv,.json,text/csv,application/json"></label>
+          <details class="youtube-playlist-import">
+            <summary>Import a YouTube Music playlist</summary>
+            <form id="youtube-playlist-form">
+              <label>Playlist URL<input id="youtube-playlist-url" type="url" placeholder="https://music.youtube.com/playlist?list=…" required></label>
+              <label>Save as playlist<input id="youtube-playlist-name" maxlength="80" placeholder="My imported playlist" required></label>
+              <p class="music-hint">Paste a public playlist link to load video titles and IDs. Review the suggestions before importing. Up to 1,000 entries per playlist; release years can be added manually.</p>
+              <div><button id="youtube-playlist-fetch" type="submit">Load playlist</button><button id="youtube-playlist-cancel" type="button" hidden>Cancel</button></div>
+            </form>
+            <p id="youtube-playlist-status" role="status" aria-live="polite"></p>
+            <form id="youtube-playlist-review" hidden>
+              <p class="music-hint">Use Find song details beside a track for MusicBrainz artist, title and first release year suggestions. Check the recording version and source before applying a match. Unknown years stay blank. Existing songs in this destination playlist keep their saved details unless you edit them here.</p>
+              <div class="music-table-wrap"><table><thead><tr><th>Include</th><th>Artist / band</th><th>Song title</th><th>Release year</th><th>Video ID</th><th>Song details</th></tr></thead><tbody id="youtube-playlist-tracks"></tbody></table></div>
+              <button type="submit">Import selected songs</button>
+            </form>
+          </details>
+          <p class="music-hint">Columns: id (optional), artist, title, year, youtube (optional), playlist (optional). CSV supports quoted fields. Existing song IDs are updated only when you apply the import.</p>
+          <div id="music-import-preview" hidden><p id="music-import-summary"></p><button id="music-import-apply" type="button">Apply import</button><button id="music-import-cancel" type="button">Cancel import</button></div>
+          <div class="music-row"><button id="music-template" type="button">Download CSV template</button><button id="music-export" type="button">Export library JSON</button><button id="music-undo" type="button" hidden>Undo song deletion</button></div>
+          <label>Filter library<input id="music-search" type="search" placeholder="Artist, title or year"></label>
+          <div class="music-table-wrap"><table><thead><tr><th>ID</th><th>Artist</th><th>Title</th><th>Year</th><th>Playlist</th><th>Actions</th></tr></thead><tbody id="music-songs"></tbody></table></div>
+        </details>
+        <details id="music-sharing">
+          <summary>QR cards &amp; website link</summary>
+          <label>Print layout<select id="music-pdf-layout"><option value="single">QR fronts only</option><option value="long" selected>Double-sided · flip on long edge</option><option value="short">Double-sided · flip on short edge</option></select></label>
+          <button id="music-pdf-export" type="button">Export playlist QR cards (PDF)</button>
+          <p class="music-hint">Twelve cards per A4 page: QR codes, thin cutting borders and a small MK mark. Double-sided exports alternate QR fronts with matching artist, title and year backs. Print A4 portrait at actual size (100%), using the selected flip edge. Test one sheet first. Exports songs with YouTube links in the selected playlist.</p>
+          <label>Website URL<input id="music-base-url" type="url" value="https://marcyknook.com/"></label>
+          <p class="music-hint">Choose QR beside a song. Each link carries that song’s record, so it works on another device after this version is published to your website. Answers stay hidden in the game but the link is not encrypted.</p>
+          <div id="music-qr" hidden><p id="music-qr-label"></p><div id="music-qr-image"></div><label>Share link<input id="music-share-link" readonly></label><button id="music-qr-download" type="button">Download QR SVG</button><button id="music-link-copy" type="button">Copy link</button></div>
+        </details>
+        </details>
+      </div>
+    </div>
     <div id="snap-suggestion"></div>
   </div>
 
@@ -320,20 +455,28 @@
         <li>Window sizes, positions, and open or minimised state</li>
         <li>Snake high score</li>
       </ul>
-      <p>Open apps will close and the default desktop will return. Your notes are kept.</p>
+      <p>Open apps will close and the default desktop will return. Your notes and music library are kept.</p>
       <div class="reset-dialog-actions">
         <button type="submit" class="reset-cancel" autofocus>Keep my preferences</button>
         <button type="button" class="button settings-reset" onclick="confirmDesktopReset()">Reset all preferences</button>
       </div>
     </form>
   </dialog>
+  <script src="js/desktop.js"></script>
+  <script src="js/window-layout.js"></script>
+  <script src="js/style-settings.js"></script>
+  <script src="js/notes-markdown.js"></script>
+  <script src="js/notes.js"></script>
+  <script src="js/vendor/qrcode.js"></script>
+  <script src="js/music-data.js"></script>
+  <script src="js/music.js"></script>
+  <script src="js/vendor/jsQR.js"></script>
+  <script src="js/music-scanner.js"></script>
+  <script src="js/music-details.js"></script>
+  <script src="js/music-playlist-import.js"></script>
+  <script src="js/music-pdf.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/snake.js"></script>
 </body>
-<script src="js/desktop.js"></script>
-<script src="js/window-layout.js"></script>
-<script src="js/style-settings.js"></script>
-<script src="js/notes-markdown.js"></script>
-<script src="js/notes.js"></script>
-<script src="js/script.js"></script>
-<script src="js/snake.js"></script>
 
 </html>

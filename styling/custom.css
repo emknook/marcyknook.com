@@ -782,3 +782,16 @@ body[data-taskbar-position="right"] .nav-pane { left: auto; border-left: 2px sol
 .nav-item.active::after { width: 22px; background: white; }
 
 .topBar .resize-button { cursor: nwse-resize; }
+
+/* Keep the preview mounted so opacity can animate both in and out. */
+#snap-suggestion { display: block; opacity: 0; visibility: hidden; transition: opacity 220ms ease, visibility 220ms, left 220ms ease, top 220ms ease, width 220ms ease, height 220ms ease; }
+#snap-suggestion.visible { opacity: 1; visibility: visible; }
+.topBar .title-bar { text-align: left; padding-left: 10px; }
+.links a, .links a:visited { color: var(--red); }
+.links a:hover { color: white; }
+.section-reset { background: #161616; border: 1px solid #777; color: #eee; padding: 8px 12px; border-radius: 5px; font: inherit; cursor: pointer; margin: 6px 6px 6px 0; }
+.section-reset:hover { border-color: var(--blue); }
+.section-reset:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.nav-pane { overflow: auto; justify-content: safe center; }
+.nav-item { flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { #snap-suggestion { transition: none; } }

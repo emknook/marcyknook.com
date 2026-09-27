@@ -34,6 +34,7 @@ function syncTaskbar() {
 }
 
 function pauseHiddenApp(targetId) {
+    if (targetId === 'music') stopMusicScanner();
     if (targetId === 'snake' && gameState === 'playing') pauseSnake();
 }
 
@@ -74,16 +75,63 @@ function positionDesktopIcon(icon, x, y) {
 }
 
 function layoutDesktopIcons() {
+    const occupied = new Set();
     desktopIcons.forEach((icon, index) => {
-        const rows = Math.max(1, Math.floor((icon.parentElement.clientHeight - 20) / 112));
+        const columns = Math.max(1, Math.floor((icon.parentElement.clientWidth - 20) / 112));
         const saved = settings.desktopPositions?.[icon.dataset.target];
-        positionDesktopIcon(icon,
-            Number.isFinite(saved?.x) ? saved.x : 20 + Math.floor(index / rows) * 112,
-            Number.isFinite(saved?.y) ? saved.y : 20 + (index % rows) * 112);
+        let x = Number.isFinite(saved?.x) ? saved.x : 20 + (index % columns) * 112;
+        let y = Number.isFinite(saved?.y) ? saved.y : 20 + Math.floor(index / columns) * 112;
+        if (settings.iconPlacement !== 'free') {
+            const rows = Math.max(1, Math.floor((icon.parentElement.clientHeight - 20) / 112));
+            const cells = Array.from({ length: columns * rows }, (_, cell) => ({
+                cell, x: 20 + cell % columns * 112, y: 20 + Math.floor(cell / columns) * 112
+            })).filter(cell => !occupied.has(cell.cell));
+            cells.sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y));
+            if (cells[0]) { x = cells[0].x; y = cells[0].y; occupied.add(cells[0].cell); }
+        }
+        positionDesktopIcon(icon, x, y);
     });
 }
 
+function resetIconPositions() {
+    settings.desktopPositions = {};
+    layoutDesktopIcons(); saveSettings();
+}
+
+function resetTaskbarPosition() {
+    settings.taskbarPosition = 'left';
+    applyTaskbarPosition(); layoutDesktopIcons(); saveSettings();
+}
+
+function resetWindowLayouts() {
+    cancelDrag(); stopResize();
+    appElements.forEach(app => {
+        const saved = getAppSettings(app.id);
+        if (!saved) return;
+        saved.maximized = false;
+        delete saved.restoreBounds;
+        updateApp(app.id, '20%', '15%', '70%', '70%', app.style.zIndex);
+    });
+    saveSettings();
+}
+
 function initializeDesktopIcons() {
+    if (settings.desktopLayoutVersion !== 2) {
+        settings.desktopPositions = {};
+        settings.desktopLayoutVersion = 2;
+    }
+    settings.iconPlacement = settings.iconPlacement === 'free' ? 'free' : 'grid';
+    const placement = document.getElementById('icon-placement');
+    placement.value = settings.iconPlacement;
+    placement.addEventListener('change', event => {
+        settings.iconPlacement = event.target.value;
+        layoutDesktopIcons();
+        desktopIcons.forEach(icon => {
+            settings.desktopPositions ??= {};
+            settings.desktopPositions[icon.dataset.target] = { x: icon.offsetLeft, y: icon.offsetTop };
+        });
+        saveSettings();
+    });
     layoutDesktopIcons();
     window.addEventListener('resize', layoutDesktopIcons);
     desktopIcons.forEach(icon => {
@@ -112,6 +160,10 @@ function initializeDesktopIcons() {
                 suppressOpenUntil = Date.now() + 500;
                 settings.desktopPositions ??= {};
                 settings.desktopPositions[icon.dataset.target] = { x: icon.offsetLeft, y: icon.offsetTop };
+                layoutDesktopIcons();
+                desktopIcons.forEach(item => {
+                    settings.desktopPositions[item.dataset.target] = { x: item.offsetLeft, y: item.offsetTop };
+                });
                 saveSettings();
             }
             drag = null;

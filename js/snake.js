@@ -5,9 +5,7 @@ const correctionWindow = 80;
 const maxQueueLength = 3;
 const minSwipeDistance = 24;
 
-const snakeContainer = document
-    .getElementById("snake")
-    .querySelector('[id="content"]');
+const snakeContainer = document.getElementById('snake-content');
 
 const canvasElement = document.createElement("canvas");
 const canvas = canvasElement.getContext("2d");
@@ -234,6 +232,7 @@ function wouldHitSnake(newHead, isGrowing) {
  */
 
 function queueDirection(direction) {
+    if (gameState !== 'playing') return;
     const now = performance.now();
 
     const shouldReplace =
@@ -397,6 +396,8 @@ function handleKeyPress(event) {
         return;
     }
 
+    if (gameState !== "playing") return;
+
     switch (key) {
         case "arrowup":
         case "w":
@@ -506,6 +507,8 @@ canvasElement.addEventListener("pointercancel", cancelSwipe);
  */
 
 function pauseSnake() {
+    directionQueue = [];
+    lastDirectionInputTime = 0;
     clearInterval(snakeInterval);
     snakeInterval = null;
 
