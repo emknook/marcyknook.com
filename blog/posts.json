@@ -1,0 +1,10 @@
+[
+  {
+    "id": "learning-with-codex",
+    "title": "Learning to develop with Codex",
+    "category": "Development process | AI tools",
+    "author": "Marcy Knook",
+    "date": "2026-09-27",
+    "markdown": "These past few weeks, I've learnt to make more use of an LLM in my development process. I've connected Codex within my development environment and have been learning how to give it enough context and explain clearly what I want it to do. I've mainly been using it within my personal portfolio, where I can experiment without much risk if something goes wrong. So far, it has been useful and has not caused many problems, although I've noticed that the available usage goes faster than one might expect when using it for larger development tasks.\n\nI'm learning this because it almost feels wrong not to. These tools are becoming more capable and more integrated into development workflows, and I think completely ignoring them could eventually mean falling behind. At the same time, I do not want to use Codex as something that simply writes code for me. I still need to understand and review what it produces.\n\nUsing Codex is also showing me that I still have a long way to go in consistently applying testing, code quality standards and a structured development process. If requirements or conventions are unclear, Codex can make assumptions that I need to catch during review, preferably before they make it into production.\n\nI therefore see Codex mostly as another development tool. If I get better at giving it context, setting constraints and reviewing its output, I think it can improve both the speed and effectiveness with which we develop what customers need."
+  }
+]

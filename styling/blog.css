@@ -48,6 +48,81 @@
   font-size: 0.9rem;
 }
 
-.blog-post > p {
+.blog-body p {
   margin: 0 0 1.4em;
+}
+
+.blog-permalink {
+  color: var(--blue);
+  text-underline-offset: 0.2em;
+}
+
+.blog-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-title-link:hover,
+.blog-title-link:focus-visible {
+  text-decoration: underline;
+}
+
+.blog-post h2 .blog-copy-button {
+  font-size: 0.7em;
+}
+
+.blog-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  cursor: pointer;
+}
+
+.blog-copy-button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.blog-copy-button:hover {
+  opacity: 0.8;
+}
+
+.blog-copy-status {
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.blog-copy-status:not(:empty) {
+  margin-left: 6px;
+}
+
+.blog-post > header {
+  margin-bottom: 24px;
+}
+
+.blog-post:focus-visible,
+.blog-body p:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+}
+
+.blog-body pre {
+  overflow-x: auto;
+  padding: 12px;
+  background: #242424;
+}
+
+.blog-body a {
+  color: var(--blue);
+}
+
+.blog-body blockquote {
+  margin-inline: 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--blue);
 }

@@ -1,6 +1,6 @@
-const navItems = document.querySelectorAll(".nav-item");
-const desktopIcons = document.querySelectorAll(".desktop-icon");
-const appElements = document.querySelectorAll(".app-content");
+const navItems = document.querySelectorAll(".nav-item:not([data-app-disabled])");
+const desktopIcons = document.querySelectorAll(".desktop-icon:not([data-app-disabled])");
+const appElements = document.querySelectorAll(".app-content:not([data-app-disabled])");
 const topBars = document.querySelectorAll(".topBar");
 const snapOverlay = document.getElementById('snap-suggestion');
 const autoplayButton = document.querySelector('.autoplay-toggle');
@@ -62,7 +62,7 @@ function createDefaultSettings() {
     return {
         theme: 'dark',
         fontSize: 'large',
-        openApps: ['app0'],
+        openApps: ['blog'],
         appSettings: [],
         desktopPositions: {},
         taskbarPosition: 'left',
@@ -117,7 +117,7 @@ function resetSettings() {
         closeApp(app.id)
     });
     saveSettings();
-    openApp('app0', false);
+    settings.openApps.forEach(id => openApp(id, false));
     applyTaskbarPosition();
     layoutDesktopIcons();
 }
@@ -505,6 +505,7 @@ function updateApp(name, x, y, height, width, z) {
 
 function openApp(targetId, forceHighest) {
     if (!document.getElementById(targetId)?.classList.contains('app-content')) return;
+    if (document.getElementById(targetId).hasAttribute('data-app-disabled')) return;
     currentlyClosing = false;
     let index = settings.appSettings.findIndex(app => app.name === targetId);
     if (index === -1) { //no settings saved for app

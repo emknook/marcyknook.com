@@ -9,6 +9,10 @@
   --border-size: 2px;
 }
 
+[data-app-disabled] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: #111;
