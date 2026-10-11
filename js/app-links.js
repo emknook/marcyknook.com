@@ -8,6 +8,9 @@
         const id = readAppLink();
         if (!id || !document.getElementById(id)?.classList.contains('app-content')) return;
         openApp(id, true);
+        if (id === 'blog' && !getAppSettings(id)?.maximized) {
+            snapWindowToZone(document.getElementById(id), 'full');
+        }
     }
 
     window.addEventListener('load', followAppLink);

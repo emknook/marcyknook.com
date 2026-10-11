@@ -147,6 +147,13 @@
         return response.json();
     }
 
+    function openLinkedBlog() {
+        openApp('blog', true);
+        if (!getAppSettings('blog')?.maximized) {
+            snapWindowToZone(document.getElementById('blog'), 'full');
+        }
+    }
+
     async function initializeBlog() {
         const status = document.getElementById('blog-status');
         const posts = document.getElementById('blog-posts');
@@ -155,7 +162,7 @@
         function followBlogLink() {
             const route = readBlogLink();
             if (!route) return;
-            openApp('blog', true);
+            openLinkedBlog();
             if (!loaded) return;
             const id = route.post
                 ? `blog/${route.post}${route.part ? `/${route.part}` : ''}` : 'blog-posts';

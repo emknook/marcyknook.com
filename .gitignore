@@ -1,2 +1,3 @@
 gitignore/
 /api/youtube-config.php
+/tests/

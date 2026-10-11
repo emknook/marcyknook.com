@@ -45,7 +45,7 @@ IDs.
 
 Link to the blog with `#blog`, a post with `#blog/learning-with-codex`, or
 an individual paragraph with `#blog/learning-with-codex/paragraph-1`.
-The blog opens automatically and scrolls to the target, including when using
+The blog opens automatically in a maximised window and scrolls to the target, including when using
 browser Back/Forward. Post titles navigate to their links. Blue link icons beside
 titles and paragraphs copy the full URL and display a confirmation. If clipboard
 access fails, the URL is displayed for manual copying.
