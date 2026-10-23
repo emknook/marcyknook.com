@@ -300,6 +300,7 @@ function renderStickyNotes() {
         title.setAttribute('aria-label', 'Sticky note title'); title.maxLength = 160;
         const tools = document.createElement('div'); tools.className = 'sticky-tools';
         const italic = document.createElement('button'); italic.type = 'button'; italic.textContent = 'Italic';
+        italic.className = 'sticky-italic';
         italic.setAttribute('aria-pressed', String(!!note.italic));
         const bullet = document.createElement('button'); bullet.type = 'button'; bullet.textContent = '• List';
         const status = document.createElement('span'); status.className = 'sticky-save-status'; status.setAttribute('role', 'status');
@@ -323,7 +324,10 @@ function renderStickyNotes() {
         });
         const unpin = document.createElement('button');
         unpin.type = 'button'; unpin.className = 'sticky-unpin';
-        unpin.textContent = 'Unpin'; unpin.title = 'Hide from desktop';
+        const unpinIcon = document.createElement('i');
+        unpinIcon.className = 'fa-solid fa-thumbtack-slash';
+        unpinIcon.setAttribute('aria-hidden', 'true');
+        unpin.append(unpinIcon); unpin.title = 'Unpin from desktop';
         unpin.setAttribute('aria-label', 'Hide sticky note from desktop');
         unpin.addEventListener('click', event => {
             event.stopPropagation();

@@ -78,6 +78,7 @@
 .sticky-tools { display: flex; align-items: center; gap: 5px; padding: 3px 8px; }
 .sticky-tools button { background: transparent; color: inherit; border: 1px solid #0005; border-radius: 4px; padding: 2px 5px; cursor: pointer; }
 .sticky-tools button[aria-pressed="true"] { background: #0002; }
+.sticky-tools .sticky-italic { font-style: italic; }
 .sticky-save-status { font: 10px sans-serif; margin-left: auto; }
 @container (max-width: 540px) {
   .notes-workspace { grid-template-columns: minmax(0, 1fr); }
