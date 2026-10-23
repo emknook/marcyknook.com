@@ -202,6 +202,9 @@
             const label = collapsed ? 'Show contents' : 'Hide contents';
             outlineToggle.setAttribute('aria-label', label);
             outlineToggle.title = label;
+            const icon = outlineToggle.querySelector('i');
+            icon.classList.toggle('fa-bars', collapsed);
+            icon.classList.toggle('fa-xmark', !collapsed);
             outlineBody.inert = collapsed;
             outline.closest('.blog-outline').classList.toggle('blog-outline-collapsed', collapsed);
         });

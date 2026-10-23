@@ -47,11 +47,14 @@
   top: 12px;
   left: 12px;
   pointer-events: auto;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   width: 36px;
   height: 36px;
   margin: 0 0 12px;
-  padding: 6px 8px;
+  padding: 0;
   border: 1px solid #505050;
   border-radius: 50%;
   background: #242424;

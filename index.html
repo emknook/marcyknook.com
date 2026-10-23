@@ -86,9 +86,9 @@
         <button class="fullsize-button" type="button" aria-label="Maximise window" title="Maximise">&#9633;</button>
         <button class="close-button" type="button" aria-label="Close window" title="Close">&#215;</button>
       </div>
-        <nav class="blog-outline" aria-label="Blog contents" hidden>
-          <button id="blog-outline-toggle" class="blog-outline-toggle" type="button" aria-label="Hide contents" title="Hide contents" aria-expanded="true" aria-controls="blog-outline-body"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
-          <div id="blog-outline-body">
+        <nav class="blog-outline blog-outline-collapsed" aria-label="Blog contents" hidden>
+          <button id="blog-outline-toggle" class="blog-outline-toggle" type="button" aria-label="Show contents" title="Show contents" aria-expanded="false" aria-controls="blog-outline-body"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+          <div id="blog-outline-body" inert>
           <a class="blog-overview-link" href="#blog">All posts</a>
           <div id="blog-outline-posts"></div>
           </div>
