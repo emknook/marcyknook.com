@@ -138,10 +138,16 @@ body {
 }
 
 .snake-score {
-  padding: 10px;
+  padding: 8px 10px;
   position: absolute;
   top: 25px;
-  right: 0px;
+  right: 8px;
+  color: white;
+  background: #181d18;
+  border: 1px solid #607060;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 
 #snap-suggestion {
@@ -772,6 +778,44 @@ body[data-taskbar-position="right"] .nav-pane { left: auto; border-left: 2px sol
   color: white;
   font: 18px/24px sans-serif;
   cursor: pointer;
+}
+/* Draw window symbols around a shared centre, independent of font baselines. */
+.topBar .fullsize-button,
+.topBar .minimize-button {
+  position: relative;
+  font-size: 0;
+}
+.topBar .fullsize-button::before,
+.topBar .minimize-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: 10px;
+}
+.topBar .minimize-button::before {
+  height: 1px;
+  background: currentColor;
+}
+.topBar .fullsize-button::before {
+  height: 10px;
+  border: 1px solid currentColor;
+}
+.topBar .fullsize-button[aria-pressed="true"]::before {
+  transform: translate(calc(-50% - 2px), calc(-50% + 2px));
+}
+.topBar .fullsize-button[aria-pressed="true"]::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 7px);
+  left: calc(50% - 3px);
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border-top: 1px solid currentColor;
+  border-right: 1px solid currentColor;
 }
 .topBar .resize-button:hover,
 .topBar .fullsize-button:hover,

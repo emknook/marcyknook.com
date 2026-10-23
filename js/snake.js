@@ -645,6 +645,22 @@ function drawSnakeEyes() {
         );
         canvas.fill();
 
+        if (gameState === 'gameover') {
+            canvas.save();
+            canvas.strokeStyle = 'black';
+            canvas.lineWidth = Math.max(1, tileSize * 0.055);
+            canvas.lineCap = 'round';
+            const crossSize = eyeRadius * 0.65;
+            canvas.beginPath();
+            canvas.moveTo(eyeX - crossSize, eyeY - crossSize);
+            canvas.lineTo(eyeX + crossSize, eyeY + crossSize);
+            canvas.moveTo(eyeX + crossSize, eyeY - crossSize);
+            canvas.lineTo(eyeX - crossSize, eyeY + crossSize);
+            canvas.stroke();
+            canvas.restore();
+            return;
+        }
+
         canvas.fillStyle = "black";
         canvas.beginPath();
         canvas.arc(
@@ -700,50 +716,54 @@ function drawBerries() {
 }
 
 function drawScore() {
-    canvas.font = "20px Arial";
-    canvas.fillStyle = "white";
-    canvas.textBaseline = "top";
-
-    canvas.fillText(`Score: ${score}`, 0, 0);
+    drawTextBox([`Score: ${score}`], 8, 8);
 }
 
 function drawDirection() {
-    canvas.font = "20px Arial";
-    canvas.fillStyle = "white";
-    canvas.textBaseline = "top";
-
     const queue =
         directionQueue.length > 0
             ? directionQueue.join(", ")
             : "-";
 
-    canvas.fillText(
-        `Direction: ${currentDirection} [${queue}]`,
-        0,
-        30
-    );
+    drawTextBox([`Direction: ${currentDirection} [${queue}]`], 8, 60, false, 14);
 }
 
 function drawMessage(message, hint = '') {
-    canvas.font = "20px Arial";
-    canvas.fillStyle = "white";
-    canvas.textBaseline = "middle";
-    canvas.textAlign = "center";
+    drawTextBox(hint ? [message, hint] : [message],
+        canvasElement.width / 2, canvasElement.height / 2, true);
+}
 
-    canvas.fillText(
-        message,
-        canvasElement.width / 2,
-        canvasElement.height / 2 - (hint ? 16 : 0),
-        Math.max(1, canvasElement.width - 16)
-    );
-
-    if (hint) {
-        canvas.font = "14px Arial";
-        canvas.fillText(hint, canvasElement.width / 2, canvasElement.height / 2 + 14,
-            Math.max(1, canvasElement.width - 16));
-    }
-
-    canvas.textAlign = "start";
+function drawTextBox(lines, x, y, centered = false, fontSize = 18) {
+    if (canvasElement.width < 32 || canvasElement.height < 32) return;
+    canvas.save();
+    const padding = 10;
+    const maxWidth = canvasElement.width - 16;
+    canvas.font = `${fontSize}px Arial`;
+    const measuredWidth = Math.max(...lines.map(line => canvas.measureText(line).width));
+    const fittedSize = fontSize * Math.min(1, (maxWidth - padding * 2) / Math.max(1, measuredWidth));
+    canvas.font = `${fittedSize}px Arial`;
+    const lineHeight = fittedSize + 8;
+    const width = Math.min(maxWidth, Math.max(...lines.map(line => canvas.measureText(line).width)) + padding * 2);
+    const height = lineHeight * lines.length + padding * 2;
+    const left = centered ? x - width / 2 : x;
+    const top = centered ? y - height / 2 : y;
+    canvas.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    canvas.shadowBlur = 10;
+    canvas.shadowOffsetY = 3;
+    canvas.fillStyle = '#181d18';
+    canvas.beginPath();
+    canvas.roundRect(left, top, width, height, 8);
+    canvas.fill();
+    canvas.shadowColor = 'transparent';
+    canvas.strokeStyle = '#607060';
+    canvas.lineWidth = 1;
+    canvas.stroke();
+    canvas.fillStyle = 'white';
+    canvas.textBaseline = 'middle';
+    canvas.textAlign = centered ? 'center' : 'left';
+    lines.forEach((line, index) => canvas.fillText(line,
+        centered ? x : left + padding, top + padding + lineHeight * (index + 0.5)));
+    canvas.restore();
 }
 
 
