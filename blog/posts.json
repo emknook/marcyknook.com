@@ -1,5 +1,13 @@
 [
   {
+    "id": "clean-code",
+    "title": "Clean Code",
+    "category": "Development process | Code quality",
+    "author": "Marcy Knook",
+    "date": "2026-10-15",
+    "markdown": "Reading Robert C. Martin's *Clean Code* and learning more about code smells gave me a boost in my understanding of reading and writing code. It gave me a stronger basis for explaining why I write code the way I do. I enjoyed reading it and feel that it will help me in code reviews and make me a better programmer in general. Seeing the different smells written down and making my own summary really helped me understand them and appreciate the value of doing things well.\n\nI was not fully aware that having too many function arguments, or using output arguments, could be code smells. Although I did not use output arguments myself, I have used my fair share of flag arguments.\n\nMy colleague's arguments for removing author names and dates from files also make more sense now. For some reason, this information appeared in scripts within our codebase. Another habit of mine was adding comments explaining what a function did, just because. I think I have moved away from that because I believe most of the code I write explains itself nowadays, as it should.\n\nBesides that, I am definitely starting to see the usefulness of developing as though the functionality I need already exists. A bad habit of mine, though, is trying to write everything out starting with the variables, rather than starting with the functionality I want to have. That is definitely something I will be focusing on in the future.\n\nI don't know whose quote it was, but it reminded me of: \"Everything that's worth doing is worth doing properly.\"\n\nI think my next post will be about test-driven development or using SonarQube."
+  },
+  {
     "id": "learning-with-codex",
     "title": "Learning to develop with Codex",
     "category": "Development process | AI tools",

@@ -147,6 +147,42 @@
         return response.json();
     }
 
+    function renderOutline(posts, outline) {
+        outline.replaceChildren(...Array.from(posts.children, article => {
+            const group = createElement('details');
+            const summary = createElement('summary');
+            const title = article.querySelector('.blog-title-link');
+            const link = createElement('a', title.textContent);
+            link.href = title.getAttribute('href');
+            summary.append(link);
+            const list = createElement('ol');
+            article.querySelectorAll('.blog-body p').forEach((paragraph, index) => {
+                const item = createElement('li');
+                const text = paragraph.cloneNode(true);
+                text.querySelectorAll('.blog-copy-link').forEach(copy => copy.remove());
+                const preview = text.textContent.trim().replace(/\s+/g, ' ');
+                const paragraphLink = createElement('a', `${index + 1}. ${preview.length > 70 ? `${preview.slice(0, 70)}…` : preview}`);
+                paragraphLink.href = `#${paragraph.id}`;
+                paragraphLink.title = preview;
+                item.append(paragraphLink);
+                list.append(item);
+            });
+            group.append(summary, list);
+            return group;
+        }));
+        outline.closest('.blog-outline').hidden = !posts.children.length;
+    }
+
+    function updateOutline(outline, route) {
+        outline.querySelectorAll('a').forEach(link => {
+            const current = route && link.getAttribute('href') === `#blog/${route.post}${route.part ? `/${route.part}` : ''}`;
+            if (current) {
+                link.setAttribute('aria-current', 'location');
+                link.closest('details').open = true;
+            } else link.removeAttribute('aria-current');
+        });
+    }
+
     function openLinkedBlog() {
         openApp('blog', true);
         if (!getAppSettings('blog')?.maximized) {
@@ -157,10 +193,23 @@
     async function initializeBlog() {
         const status = document.getElementById('blog-status');
         const posts = document.getElementById('blog-posts');
+        const outline = document.getElementById('blog-outline-posts');
+        const outlineToggle = document.getElementById('blog-outline-toggle');
+        const outlineBody = document.getElementById('blog-outline-body');
+        outlineToggle.addEventListener('click', () => {
+            const collapsed = outlineToggle.getAttribute('aria-expanded') === 'true';
+            outlineToggle.setAttribute('aria-expanded', String(!collapsed));
+            const label = collapsed ? 'Show contents' : 'Hide contents';
+            outlineToggle.setAttribute('aria-label', label);
+            outlineToggle.title = label;
+            outlineBody.inert = collapsed;
+            outline.closest('.blog-outline').classList.toggle('blog-outline-collapsed', collapsed);
+        });
         let loaded = false;
 
         function followBlogLink() {
             const route = readBlogLink();
+            updateOutline(outline, route);
             if (!route) return;
             openLinkedBlog();
             if (!loaded) return;
@@ -183,6 +232,7 @@
         try {
             const data = validatePosts(await fetchJson('blog/posts.json'));
             posts.replaceChildren(...data.map(renderPost));
+            renderOutline(posts, outline);
             loaded = true;
             status.textContent = data.length ? '' : 'No posts yet.';
             status.hidden = data.length > 0;

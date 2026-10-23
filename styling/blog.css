@@ -1,4 +1,82 @@
+.blog-layout {
+  width: 100%;
+}
+
+#blog {
+  container-type: inline-size;
+}
+
+#blog > .scrollwrapper {
+  padding-left: 0;
+}
+
+.blog-outline {
+  position: absolute;
+  z-index: 5;
+  top: 24px;
+  bottom: 0;
+  left: 0;
+  width: min(280px, calc(100% - 52px));
+  pointer-events: none;
+  color: #e8e8e8;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.blog-outline[hidden] { display: none; }
+#blog-outline-body {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  padding: 64px 16px 24px;
+  overflow-y: auto;
+  background: #242424;
+  border-right: 1px solid #505050;
+  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  transition: transform 220ms ease, visibility 220ms;
+}
+.blog-outline-collapsed #blog-outline-body {
+  transform: translateX(-100%);
+  visibility: hidden;
+  pointer-events: none;
+}
+.blog-outline-toggle {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  left: 12px;
+  pointer-events: auto;
+  display: block;
+  width: 36px;
+  height: 36px;
+  margin: 0 0 12px;
+  padding: 6px 8px;
+  border: 1px solid #505050;
+  border-radius: 50%;
+  background: #242424;
+  color: #e8e8e8;
+  font: inherit;
+  cursor: pointer;
+}
+.blog-outline-toggle:hover { border-color: var(--blue); }
+.blog-outline-toggle:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.blog-outline a { color: #bdbdbd; text-decoration: none; }
+.blog-outline a:hover { color: var(--blue); text-decoration: underline; }
+.blog-outline a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.blog-outline a[aria-current] { color: var(--blue); font-weight: bold; }
+.blog-outline details { margin-top: 16px; }
+.blog-outline summary { cursor: pointer; }
+.blog-outline summary a { color: #e8e8e8; }
+.blog-outline ol { list-style: none; margin: 8px 0 0; padding-left: 16px; }
+.blog-outline li { margin-bottom: 10px; font-size: 0.85rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  #blog-outline-body { transition: none; }
+}
+
 .blog-content {
+  min-width: 0;
   max-width: 68ch;
   margin-inline: auto;
   padding: clamp(12px, 3vw, 32px);
